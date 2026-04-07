@@ -1,7 +1,5 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
 import { WaitlistForm } from "./components/WaitlistForm";
 
 const VALUE_PROPS = [
@@ -26,9 +24,6 @@ const VALUE_PROPS = [
 ];
 
 export default function Home() {
-  const valueRef = useRef(null);
-  const valueInView = useInView(valueRef, { once: true, margin: "-60px" });
-
   return (
     <div style={{ minHeight: "100vh" }}>
       {/* Header */}
@@ -68,11 +63,7 @@ export default function Home() {
           alignItems: "center",
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="waitlist-fade-in" style={{ animationDelay: "0s" }}>
           <span
             className="mono"
             style={{
@@ -114,20 +105,15 @@ export default function Home() {
             your CRM, projects, payments, and client portal built in. Join the
             waitlist for early access.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-        >
+        <div className="waitlist-fade-in" style={{ animationDelay: "0.15s" }}>
           <WaitlistForm />
-        </motion.div>
+        </div>
       </section>
 
       {/* Value Props */}
       <section
-        ref={valueRef}
         style={{
           maxWidth: "80rem",
           margin: "0 auto",
@@ -144,12 +130,11 @@ export default function Home() {
           }}
         >
           {VALUE_PROPS.map((item, i) => (
-            <motion.div
+            <div
               key={item.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={valueInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.12 }}
+              className="waitlist-fade-in"
               style={{
+                animationDelay: `${0.3 + i * 0.12}s`,
                 padding: "1.75rem",
                 backgroundColor: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.06)",
@@ -189,7 +174,7 @@ export default function Home() {
               >
                 {item.description}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -213,8 +198,22 @@ export default function Home() {
         </p>
       </footer>
 
-      {/* Responsive overrides */}
+      {/* Animations + Responsive */}
       <style>{`
+        @keyframes waitlistFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .waitlist-fade-in {
+          opacity: 0;
+          animation: waitlistFadeIn 0.6s ease-out forwards;
+        }
         @media (max-width: 768px) {
           .waitlist-hero {
             grid-template-columns: 1fr !important;
