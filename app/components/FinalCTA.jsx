@@ -4,7 +4,7 @@ export function FinalCTA({ heading, subheading }) {
   return (
     <section className="gradient-divider py-24 md:py-32">
       <div className="mx-auto max-w-3xl px-6 text-center">
-        <h3 className="mb-5 text-3xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[2.5rem]">
+        <h3 className="mb-5 text-3xl font-semibold leading-tight tracking-[-0.02em] text-white [text-wrap:balance] md:text-[2.5rem]">
           {heading}
         </h3>
         {subheading && (

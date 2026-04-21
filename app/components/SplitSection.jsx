@@ -18,7 +18,7 @@ export function SplitSection({
               {eyebrow}
             </span>
           )}
-          <h3 className="mb-4 text-2xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[1.75rem]">
+          <h3 className="mb-4 text-2xl font-semibold leading-tight tracking-[-0.02em] text-white [text-wrap:balance] md:text-[2rem]">
             {heading}
           </h3>
           <p className="text-base leading-[1.65] text-white/70">{body}</p>

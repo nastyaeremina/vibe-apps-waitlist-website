@@ -15,7 +15,7 @@ export function ComparisonTable({
             </span>
           )}
           {heading && (
-            <h3 className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[2rem]">
+            <h3 className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-white [text-wrap:balance] md:text-[2rem]">
               {heading}
             </h3>
           )}

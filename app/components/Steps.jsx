@@ -258,7 +258,7 @@ export function Steps({ eyebrow, heading, steps = [] }) {
             </span>
           )}
           {heading && (
-            <h3 className="max-w-2xl text-2xl font-semibold leading-tight tracking-[-0.02em] text-white md:text-[2rem]">
+            <h3 className="max-w-2xl text-2xl font-semibold leading-tight tracking-[-0.02em] text-white [text-wrap:balance] md:text-[2rem]">
               {heading}
             </h3>
           )}
@@ -295,7 +295,7 @@ export function Steps({ eyebrow, heading, steps = [] }) {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <h4 className="mono mb-2 text-[13px] uppercase tracking-[0.08em] text-white">
+                    <h4 className="mb-2 text-[15px] font-semibold tracking-[-0.01em] text-white">
                       {step.title}
                     </h4>
                     <p className="text-[0.95rem] leading-[1.6] text-white/55">

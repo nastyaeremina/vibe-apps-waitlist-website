@@ -60,6 +60,26 @@ body {
   overflow-x: hidden;
 }
 
+/* Hide the native scrollbar. Lenis handles smooth scrolling; the visible
+   track on the right edge clashes with the cinematic section rhythm, so
+   we remove it. The page still scrolls normally. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+body {
+  scrollbar-width: none;
+}
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 ::selection {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
@@ -81,23 +101,9 @@ body {
   transform: none;
 }
 
-/* ── Gradient divider utility ── */
+/* ── Gradient divider utility (disabled — dividers removed site-wide) ── */
 .gradient-divider {
   position: relative;
-}
-.gradient-divider::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
 }
 
 /* ── Studio "thinking" dots ── */
@@ -115,6 +121,19 @@ body {
 }
 .studio-thinking-dot {
   animation: studio-thinking 1.2s ease-in-out infinite;
+}
+
+/* ── Logo marquee (mobile) ──
+   Inner track contains the logo list rendered twice. Translating the
+   track by -50% lands the second copy exactly where the first started,
+   so the loop is seamless. The track must be as wide as the two copies
+   combined; flexbox + `flex-none` on each item keeps widths stable. */
+@keyframes logo-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.logo-marquee-track {
+  animation: logo-marquee 28s linear infinite;
 }
 
 /* ── Studio "ship" arrow nudge ── */
