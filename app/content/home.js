@@ -12,11 +12,9 @@ export const HOME_CONTENT = {
   whyAssemblyStudio: {
     // Display headline is split in two: the primary statement renders at
     // full weight, and the `callout` continues inline at reduced opacity
-    // (V7-style). Together they read as one sentence — "Assembly Studio
-    // is not just another app builder" — with visual emphasis on the
-    // first half.
-    heading: "Assembly Studio is not",
-    callout: "just another app builder",
+    // (V7-style).
+    heading: "Not another app builder",
+    callout: "We built the platform layer",
     body: [
       "Other app builders are great for internal tools, prototypes, and websites. But if you're serving real paying clients, you don't need one vibe-coded app. You need a polished, branded, secure, and consolidated client experience.",
       "Our app builder is the only one that understands your business. Describe what you want: a custom intake flow, a progress tracker, a proposal tool. It builds an app that works with your existing contacts and companies, respects your permissions, and integrates with email and in-product notifications. Every app deploys straight into your client experience, not as a standalone tool on a separate URL, but as a native part of your firm.",
@@ -138,20 +136,48 @@ export const HOME_CONTENT = {
 
   testimonials: {
     heading: "What alpha testers are saying",
-    // Subheading intentionally omitted — the design lands on the heading
-    // alone, no supporting line.
+    subheading:
+      "Early partners building client-ready apps on the Assembly platform, in days not months.",
     quotes: [
       {
-        body: "We replaced three tools and a half-finished Lovable project with one Assembly Studio workspace. Clients see a polished portal, not a prototype.",
-        name: "Maya Chen",
-        title: "Partner",
-        company: "Archer & Co",
+        segment: "Advisory",
+        body: "We replaced three contractors and two weeks of Zapier glue with a single Studio prompt. Our clients never saw the seam.",
+        name: "Dana Reyes",
+        title: "Founder",
+        company: "Northstar Advisory",
+        photo: "/testimonials/Frame%202147223878.png",
       },
       {
-        body: "Auth, permissions, billing. The stuff that normally kills a weekend project was just there.",
-        name: "Jordan Reyes",
-        title: "Founder",
-        company: "Pennant Advisory",
+        segment: "Legal",
+        body: "Studio feels like the platform we would have built internally if we'd had two years and an engineering team. We didn't. We shipped anyway.",
+        name: "Marcus Lin",
+        title: "Managing Partner",
+        company: "Runway Legal",
+        photo: "/testimonials/Frame%202147223879.png",
+      },
+      {
+        segment: "Consulting",
+        body: "Auth, billing, the client portal: all of it was already there. I described the workflow, clients were using it by Friday.",
+        name: "Priya Shah",
+        title: "Principal",
+        company: "Helio",
+        photo: "/testimonials/image%2010.png",
+      },
+      {
+        segment: "Accounting",
+        body: "We went from spreadsheets and email threads to a branded client portal in under a week. Our retention jumped the month we shipped it.",
+        name: "Evelyn Park",
+        title: "Partner",
+        company: "Park & Co. CPAs",
+        photo: "/testimonials/image%2011.png",
+      },
+      {
+        segment: "Agency",
+        body: "Studio collapses what used to be a three-month build into an afternoon prompt. Our margins on client work changed overnight.",
+        name: "Jordan Whitfield",
+        title: "Creative Director",
+        company: "Field Studio",
+        photo: "/testimonials/image%2012.png",
       },
     ],
   },
