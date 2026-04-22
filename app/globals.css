@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Inter is loaded for the product-UI animation visuals so they read as
+   real SaaS interfaces, not marketing copy. Marketing surfaces keep the
+   brand font (PP Mori) via body defaults. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 /* ── Font faces ── */
 @font-face {
   font-family: "PP Mori";
@@ -88,6 +93,13 @@ body::-webkit-scrollbar {
 
 .mono {
   font-family: var(--font-mono);
+}
+
+/* Opt-in font switch for the UI animation visuals. Apply on the root of
+   any mock-product surface so every child inherits Inter. */
+.font-inter,
+.font-inter * {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 /* ── Reveal-on-scroll ── */

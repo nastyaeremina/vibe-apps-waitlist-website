@@ -12,6 +12,18 @@ import clsx from "clsx";
 // sidebar highlight and the main canvas change between
 // phases; the sidebar itself stays mounted so the handoff reads as a real
 // user navigating, not a slide show.
+//
+// ── Shared type scale (Inter, applied via .font-inter on the root) ─────
+//   hero    15px  — app/brand title (not used here; see ThreeStepsVisual)
+//   title   13px  — panel titles, section headers, FAQ header
+//   body    12px  — list items, main content rows
+//   label   11px  — subsection headers, FAQ links, truncate titles
+//   caption 10px  — field labels, metadata, inline help
+//   micro    9px  — counters, badges, dense tables, avatar initials
+// The Visa glyph at 8px is a faux-logo asset (not body typography) and is
+// intentionally off-scale. Font weights pair medium/semibold to content
+// emphasis — see ThreeStepsVisual.jsx for the same scale applied to the
+// first-value-prop animation.
 
 const CARD_GRADIENT = [
   "linear-gradient(180deg, rgba(255,255,255,0) 12.397%, rgb(139,153,200) 74.611%, rgb(217,237,146) 100%)",
@@ -37,11 +49,14 @@ const PHASES = [
 ];
 
 // ── Sidebar item ────────────────────────────────────────────────────────
+// Dimensions (width, gap, padding, icon size, label size/weight) are
+// intentionally locked to the Studio sidebar in ThreeStepsVisual so both
+// animations read as the same product.
 function SidebarItem({ label, iconSrc, iconNode, active }) {
   return (
     <div
       className={clsx(
-        "flex items-center gap-2 rounded-[4px] px-2 py-[5px] transition-colors duration-[350ms] ease-out",
+        "flex items-center gap-2 rounded-[4px] px-2 py-1 transition-colors duration-[350ms] ease-out",
       )}
       style={{
         backgroundColor: active ? SIDEBAR_ACTIVE_BG : "transparent",
@@ -73,17 +88,17 @@ function SidebarItem({ label, iconSrc, iconNode, active }) {
 }
 
 // ── Main canvas panels ──────────────────────────────────────────────────
-function PanelHeader({ title, subtitle }) {
+// Shared top-bar strip — matches the On-Boarding page header in
+// ThreeStepsVisual (fixed 36px tall, 1px bottom border, section name in
+// 11px medium, optional trailing chip/button). No subcopy: the sidebar
+// already establishes context, so the top bar stays quiet.
+function PanelHeader({ title, trailing }) {
   return (
-    <div className="mb-3">
-      <div className="text-[14px] font-medium leading-[1.3] text-[#212b36]">
+    <div className="flex h-[36px] items-center border-b border-[#eef0f2] px-4">
+      <span className="truncate text-[11px] font-medium text-[#212b36]">
         {title}
-      </div>
-      {subtitle && (
-        <div className="mt-0.5 text-[9px] leading-[1.35] text-[#6b6f76]">
-          {subtitle}
-        </div>
-      )}
+      </span>
+      {trailing && <span className="ml-2 flex items-center">{trailing}</span>}
     </div>
   );
 }
@@ -114,18 +129,19 @@ function TaskIcon() {
 function HomePanel() {
   // Invoices uses the Payments icon (closest semantic match from the
   // supplied asset pack); Tasks falls back to an inline tick-in-square.
+  // Neutral action-card styling — the sidebar is the client's lime brand,
+  // but the action cards are app surface, so they read in greys. Counts
+  // carry the "what needs attention" signal (100 invoices vs 5 contracts).
   const actions = [
-    { label: "Invoices", count: "100", iconSrc: "/Icons/payments.svg", active: true },
+    { label: "Invoices", count: "100", iconSrc: "/Icons/payments.svg" },
     { label: "Contracts", count: "5", iconSrc: "/Icons/contracts.svg" },
     { label: "Forms", count: "10", iconSrc: "/Icons/forms.svg" },
     { label: "Tasks", count: "50", iconNode: <TaskIcon /> },
   ];
   return (
-    <div className="flex h-full flex-col overflow-hidden px-5 py-4">
-      <PanelHeader
-        title="Good morning, Ana"
-        subtitle="Here's what needs your attention today"
-      />
+    <div className="flex h-full flex-col overflow-hidden">
+      <PanelHeader title="Client Home" />
+      <div className="flex-1 overflow-hidden px-5 py-3">
 
       {/* Hero banner — lavender/blue gradient stands in for the Figma
           image so we don't ship a photo asset. */}
@@ -146,13 +162,7 @@ function HomePanel() {
           {actions.map((a) => (
             <div
               key={a.label}
-              className={clsx(
-                "flex items-center justify-between rounded-[4px] px-2 py-[7px]",
-                a.active
-                  ? "border-0"
-                  : "border border-[#eff1f4] bg-white",
-              )}
-              style={a.active ? { backgroundColor: SIDEBAR_ACTIVE_BG } : {}}
+              className="flex items-center justify-between rounded-[4px] border border-[#eff1f4] bg-white px-2 py-[7px]"
             >
               <div className="flex items-center gap-1">
                 {a.iconSrc ? (
@@ -211,6 +221,7 @@ function HomePanel() {
           </div>
         ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -244,25 +255,7 @@ function DateChip({ label }) {
 function MessagesPanel() {
   return (
     <div className="flex h-full flex-col">
-      {/* Header — participants + ellipsis button */}
-      <div className="flex items-center gap-3 border-b border-[#dfe1e4] px-4 py-2.5">
-        <p className="flex-1 text-[10px] font-medium text-[#212b36]">
-          Bernard Simons, Kaitlyn Moore, Martin Sung
-        </p>
-        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[3px] border border-black/10 text-[#6b6f76]">
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <circle cx="5" cy="12" r="1.8" />
-            <circle cx="12" cy="12" r="1.8" />
-            <circle cx="19" cy="12" r="1.8" />
-          </svg>
-        </span>
-      </div>
+      <PanelHeader title="Messages" />
 
       {/* Thread body */}
       <div className="flex-1 overflow-hidden pt-2">
@@ -337,9 +330,9 @@ function MessagesPanel() {
 
 function OnboardingPanel() {
   return (
-    <div className="flex h-full flex-col px-5 py-4">
+    <div className="flex h-full flex-col">
       <PanelHeader title="On-Boarding" />
-      <div className="flex-1">
+      <div className="flex-1 overflow-hidden px-5 py-3">
         <div className="mb-1.5 text-[10px] uppercase tracking-[0.08em] text-[#90959d]">
           Step 2 of 4
         </div>
@@ -436,11 +429,7 @@ function BankIcon() {
 function PaymentsPanel() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Page title + divider — matches Figma "Billing" header strip */}
-      <div className="border-b border-[#eef0f2] px-5 py-3 text-[13px] font-medium text-[#212b36]">
-        Billing
-      </div>
-
+      <PanelHeader title="Billing" />
       <div className="flex-1 overflow-hidden px-5 py-3 space-y-4">
         {/* Payment Methods */}
         <section>
@@ -542,8 +531,9 @@ function HelpdeskPanel() {
     "How do I book a kickoff call?",
   ];
   return (
-    <div className="flex h-full flex-col px-5 py-4">
-      <PanelHeader title="Helpdesk" subtitle="Embedded from our Notion workspace" />
+    <div className="flex h-full flex-col">
+      <PanelHeader title="Helpdesk" />
+      <div className="flex-1 overflow-hidden px-5 py-3">
       <div className="mb-2 text-[11px] font-semibold text-[#101010]">FAQ</div>
       <div className="space-y-1.5">
         {items.map((q, i) => (
@@ -555,6 +545,7 @@ function HelpdeskPanel() {
             <span className="truncate">{q}</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
@@ -607,24 +598,24 @@ function PortalSurface({ phaseIndex }) {
       )}
     >
       <div className="flex h-full">
-        {/* Sidebar — lime-green client-branded column (Figma 227:11329) */}
+        {/* Sidebar — lime-green client-branded column (Figma 227:11329).
+            Width/gap/padding match ThreeStepsVisual's Studio sidebar so
+            both animations share the same chassis. */}
         <div
-          className="flex w-[196px] flex-shrink-0 flex-col gap-[2px] px-2 pt-2.5"
+          className="flex w-[200px] flex-shrink-0 flex-col gap-[6px] px-2 pt-2.5"
           style={{ backgroundColor: SIDEBAR_BG }}
         >
-          {/* Brand row */}
-          <div className="mb-1 flex items-center gap-2 px-2 py-1.5">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[4px] bg-[#101010]">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                aria-hidden="true"
-              >
-                <circle cx="5" cy="5" r="3.2" fill="#fff" />
-              </svg>
-            </span>
-            <span className="text-[12px] font-normal text-black">
+          {/* Brand row — uses the uploaded BrandMages mark */}
+          <div className="flex items-center gap-2 rounded-[4px] px-2 py-1.5">
+            <img
+              src="/logos/brandmages.svg"
+              alt=""
+              aria-hidden="true"
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px] flex-shrink-0 rounded-[3px]"
+            />
+            <span className="flex-1 text-[12px] font-medium text-[#212b36]">
               BrandMages
             </span>
           </div>
@@ -693,7 +684,7 @@ export function ClientPortalVisual() {
   return (
     <div
       ref={ref}
-      className="relative aspect-[3/2] w-full overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.45)]"
+      className="font-inter relative aspect-[3/2] w-full overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.45)]"
       style={{ backgroundImage: CARD_GRADIENT }}
     >
       <PortalSurface phaseIndex={phase} />

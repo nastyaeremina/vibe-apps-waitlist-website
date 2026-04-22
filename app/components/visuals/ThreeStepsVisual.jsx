@@ -8,6 +8,16 @@ import clsx from "clsx";
 // generating the app, and the resulting client experience coming
 // alive. The outer card's gradient is preserved exactly — the
 // animation sits on top of it.
+//
+// ── Shared type scale (Inter, applied via .font-inter on the root) ─────
+//   hero    15px  — app/brand title (e.g. "BrandMages" in the result panel)
+//   title   13px  — panel titles, primary buttons, prompt body
+//   body    12px  — list items, tab labels, field input text
+//   label   11px  — section labels, sidebar headers, file chip text
+//   caption 10px  — field sub-labels ("Name", "Industry"), step badges
+//   micro    9px  — (not used here; see ClientPortalVisual for dense rows)
+// Shared with ClientPortalVisual.jsx so the two animations read as one
+// family. Any new size needs to slot into this scale, not invent a new one.
 
 const CARD_GRADIENT = [
   "linear-gradient(180deg, rgba(255,255,255,0) 12.397%, rgb(139,153,200) 74.611%, rgb(217,237,146) 100%)",
@@ -459,20 +469,14 @@ function ResultPhase({ active }) {
               transform: `translateY(${revealCount > 0 ? 0 : -3}px)`,
             }}
           >
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[3px] bg-[#101010]">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 8 8"
-                fill="none"
-                aria-hidden="true"
-              >
-                <rect x="0.6" y="0.6" width="2.8" height="2.8" rx="0.4" fill="#fff" />
-                <rect x="4.6" y="0.6" width="2.8" height="2.8" rx="0.4" fill="#fff" />
-                <rect x="0.6" y="4.6" width="2.8" height="2.8" rx="0.4" fill="#fff" />
-                <rect x="4.6" y="4.6" width="2.8" height="2.8" rx="0.4" fill="#fff" />
-              </svg>
-            </span>
+            <img
+              src="/logos/brandmages.svg"
+              alt=""
+              aria-hidden="true"
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px] flex-shrink-0 rounded-[3px]"
+            />
             <span className="flex-1 text-[12px] font-medium text-[#212b36]">
               BrandMages
             </span>
@@ -655,7 +659,7 @@ export function ThreeStepsVisual() {
   return (
     <div
       ref={ref}
-      className="relative aspect-[3/2] w-full overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.45)]"
+      className="font-inter relative aspect-[3/2] w-full overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.45)]"
       style={{ backgroundImage: CARD_GRADIENT }}
     >
       {/* Input + Thinking share a centered slot; the Result phase
