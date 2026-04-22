@@ -6,16 +6,16 @@ export const HOME_CONTENT = {
     eyebrow: "Early access beta",
     heading: "The platform layer for AI\u2011native service firms",
     subheading:
-      "You're not a legacy firm adopting AI. You're building something new. Assembly is the operating system, so you can focus on what makes your firm different. Not another AI app builder. One that actually ships to clients.",
+      "You're building something new. Assembly is the system behind it, so you can focus on what makes your firm different. Not another AI app builder, one that actually ships to clients.",
   },
 
   whyAssemblyStudio: {
     eyebrow: "Why Assembly Studio",
     heading: "Not another app builder",
     body: [
-      "App builders like Lovable, Replit, and Base44 are great for internal tools and prototypes. But if you're a professional service firm or startup serving real clients, you need more than just an app. You need a whole host of features and a polished, secure experience for your customers.",
-      "Assembly Studio comes with a pre-built foundation: a CRM for your team, a branded portal for your customers, integrated notifications, and roles & permissions. On top of that, a library of reviewed apps you can one\u2011click enable for messaging, payments, contracts, file\u2011sharing, and more.",
-      "Assembly Studio is how you build what makes your firm different: custom intake flows, progress trackers, proposal tools, and more. Deliver an experience above the competition with Assembly Studio.",
+      "Other app builders are great for internal tools, prototypes, and websites. But if you're serving real paying clients, you don't need one vibe-coded app. You need a polished, branded, secure, and consolidated client experience.",
+      "Our app builder is the only one that understands your business. Describe what you want, a custom intake flow, a progress tracker, a proposal tool, and it builds an app that works with your existing contacts and companies, respects your permissions, and integrates with email and in-product notifications. Every app deploys straight into your client experience, not as a standalone tool on a separate URL, but as a native part of your firm.",
+      "And underneath it all, a real platform. Assembly Studio gives you a CRM for your team, a branded portal for clients, integrated notifications, and permissions, plus a library of reviewed apps you can one-click enable. Every piece is designed to work together, so the client experience you deliver feels cohesive and complete.",
     ],
   },
 
@@ -37,36 +37,27 @@ export const HOME_CONTENT = {
     {
       layout: "split",
       orientation: "text-left",
-      eyebrow: "AI generation",
-      menuLabel: "AI generation",
-      heading: "Describe your firm. We build the apps around it",
-      body: "Tell Studio what you do differently: intake flows, client dashboards, scoped deliverables, custom pricing logic. It generates production apps wired into Assembly's data, not throwaway prototypes.",
-      visualKey: "promptCard",
+      eyebrow: "AI builder",
+      menuLabel: "AI builder",
+      heading: "Three steps to a shipped client app",
+      body: "Start from a template or describe your own app in plain English. Assembly generates a secure app and publishes it to your client portal, no code, no deploy step, no infrastructure to wire up.",
+      visualKey: "threeSteps",
     },
     {
       layout: "split",
       orientation: "text-right",
-      eyebrow: "Infrastructure included",
-      menuLabel: "Infrastructure",
-      heading: "Auth, CRM, billing, messaging, already live",
-      body: "Every generated app inherits Assembly's platform: authenticated clients, scoped permissions, billing surfaces, messaging threads, and a branded portal. You don't wire plumbing. You ship.",
+      eyebrow: "Client experience",
+      menuLabel: "Client experience",
+      heading: "Where your apps meet your clients",
+      body: "Every client sees a portal built from native Assembly apps and the ones you built yourself, organized into folders, scoped per client, branded as yours.",
       visualKey: "infrastructure",
     },
     {
       layout: "stacked",
-      eyebrow: "Client-facing, not internal",
-      menuLabel: "Client-facing",
-      heading: "Apps your clients actually use, not internal tools",
-      body: "Studio assumes the end user is your client, not your team. Branded portal, permissioned views, client-ready notifications. The difference between a demo and a product.",
-      visualKey: "studioApp",
-    },
-    {
-      layout: "split",
-      orientation: "text-left",
-      eyebrow: "Production-ready",
-      menuLabel: "Production-ready",
-      heading: "Ship the same day you describe it",
-      body: "No deploy pipeline. No auth audit. No schema migrations. Studio generates, Assembly hosts, your clients sign in. Weeks of setup collapse into an afternoon.",
+      eyebrow: "Internal dashboard",
+      menuLabel: "Internal dashboard",
+      heading: "Your team's command center",
+      body: "Behind the portal, your team's command center. A CRM with contacts and companies, custom fields, internal notes, a unified notification center, automations, and every custom app you built ships with an internal view for your team, too.",
       visualKey: "studioApp",
     },
   ],
@@ -79,16 +70,49 @@ export const HOME_CONTENT = {
     firstColumnLabel: "Where we differ",
     leftLabel: "Lovable / Replit",
     rightLabel: "Assembly Studio",
-    // Rows are [rowLabel, competitor, assembly]. Copy kept tight —
-    // labels in the left column carry the axis, so the cells just
-    // need a sharp phrase, not a sentence.
+    // Rows are [rowLabel, competitor, assembly, mobileFeature?]. The
+    // first three drive the desktop 3-col grid where the axis label
+    // carries the comparison. Mobile renders as a Studio-only
+    // checklist, so the optional 4th element rephrases the Assembly
+    // answer as a standalone statement — reads naturally without the
+    // axis as scaffolding.
     rows: [
-      ["Who it's for", "Anyone building software", "AI-native service firms"],
-      ["What it's for", "Prototypes & internal tools", "Client-facing experiences"],
-      ["Where it lives", "Standalone app at its own URL", "Inside your branded portal"],
-      ["What's included", "You build the stack", "CRM, portal, auth, billing, notifications"],
-      ["How apps connect", "Siloed, one-off apps", "Organized in folders, trigger each other"],
-      ["Best fit for", "A one-off tool", "A consolidated client experience"],
+      [
+        "Who it's for",
+        "Anyone building software",
+        "AI-native service firms",
+        "Built for AI-native service firms",
+      ],
+      [
+        "What it's for",
+        "Prototypes & internal tools",
+        "Client-facing experiences",
+        "Built for client-facing experiences",
+      ],
+      [
+        "Where it lives",
+        "Standalone app at its own URL",
+        "Inside your branded portal",
+        "Lives inside your branded portal",
+      ],
+      [
+        "What's included",
+        "You build the stack",
+        "CRM, portal, auth, billing, notifications",
+        "CRM, portal, auth, billing, and notifications included",
+      ],
+      [
+        "How apps connect",
+        "Siloed, one-off apps",
+        "Organized in folders, trigger each other",
+        "Apps organized in folders, triggering each other",
+      ],
+      [
+        "Best fit for",
+        "A one-off tool",
+        "A consolidated client experience",
+        "Built for a consolidated client experience",
+      ],
     ],
   },
 
@@ -180,35 +204,32 @@ export const HOME_CONTENT = {
     heading: "Questions, answered",
     items: [
       {
-        q: "What is Assembly Studio?",
-        a: "Studio is the AI app layer of the Assembly platform. Describe a client-facing workflow and Studio generates a production app wired into Assembly's auth, billing, messaging, and client portal.",
+        q: "How do I get access to Assembly Studio?",
+        a: "Join the waitlist. We're onboarding in waves and reaching out with cohort timing as capacity opens.",
       },
       {
-        q: "Who is this for?",
-        a: "AI-native service firms: new firms being built on AI from day one. If you're launching a modern advisory, legal, creative, or consulting firm and need client-facing tools without an engineering team, Studio is for you.",
+        q: "What does it cost?",
+        a: "Flat per-workspace plan for the foundation (CRM, portal, auth, permissions, messaging, payments). Custom apps run on metered build credits. Waitlist members get $100 to start. Full pricing at launch.",
       },
       {
-        q: "Do I need to code?",
-        a: "No. You describe what you want in plain English. Studio handles generation, Assembly handles infrastructure.",
+        q: "How secure is it?",
+        a: "Row-level client scoping on by default, magic-link and SSO auth, encryption at rest and in transit, audit logs. SOC 2 Type II in progress. Region-pinned data on Enterprise.",
       },
       {
-        q: "Alpha vs beta: what does that mean?",
-        a: "Studio is already live in alpha with a small group of early teams. The beta is what you're requesting access to: a wider rollout with more capacity and polish, running on the same platform.",
+        q: "Can I get help building features?",
+        a: "Yes. 21 reviewed apps enable with one click. For bespoke work, our solutions team and partner network build alongside you on the same platform.",
       },
       {
-        q: "When will I get access?",
-        a: "We're inviting teams in waves. Request access and we'll reach out with next-cohort timing and onboarding.",
-      },
-      {
-        q: "Is this part of Assembly?",
-        a: "Studio is a sub-brand of Assembly and runs on the Assembly platform. You don't need an existing Assembly account. We set you up when access opens.",
+        q: "What if I already have an Assembly workspace?",
+        a: "Studio slots into your existing workspace. Same CRM, portal, clients. When access opens, it appears in your sidebar. No migration.",
       },
     ],
   },
 
   finalCta: {
-    heading: "Ship your firm on Assembly",
-    subheading: "Request early access to the Studio beta. Built on the platform already running in alpha.",
+    heading: "Reserve your seat.",
+    subheading:
+      "The first signups get a personalized onboarding session. We'll sit with you, understand your firm, and help you craft the client experience your firm deserves.",
   },
 
   footer: {

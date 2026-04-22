@@ -30,7 +30,14 @@ const GENERATED_ITEMS = [
 ];
 
 const ACCENT = "rgb(217,237,146)"; // brand lime
-const DURATIONS = [3200, 1800, 2000]; // ms per step
+export const DURATIONS = [3200, 1800, 2000]; // ms per step
+
+// Shared gradient recipe — matches PromptCardVisual / Infrastructure so
+// all value-prop visuals read as the same family.
+const CARD_GRADIENT = [
+  "linear-gradient(180deg, rgba(255,255,255,0) 12.397%, rgb(139,153,200) 74.611%, rgb(217,237,146) 100%)",
+  "linear-gradient(90deg, rgb(255,255,255) 0%, rgb(255,255,255) 100%)",
+].join(", ");
 
 // Segmented progress bar: one continuous strip of vertical bars split
 // evenly across the three steps. 24 segments per step → 72 total.
@@ -204,7 +211,7 @@ function ShippedPhase({ active }) {
   );
 }
 
-function StudioPreview({ activeStep }) {
+export function StudioPreview({ activeStep }) {
   // Default to phase 0 at rest (matches the timeline's default first-step
   // active state).
   const effectiveStep = activeStep ?? 0;
@@ -255,10 +262,14 @@ function StudioPreview({ activeStep }) {
   const generating = activeStep === 1 && revealCount < GENERATED_ITEMS.length;
 
   return (
-    // Large off-white canvas — wider aspect than the old card so the
-    // visual reads as the "hero" of the section (Voiceflow-style).
-    <div className="relative aspect-[16/11] w-full overflow-hidden rounded-[24px] bg-[#F5F5F0] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] md:aspect-[16/10] md:rounded-[32px] lg:aspect-[16/9]">
-      <div className="absolute left-1/2 top-1/2 w-[86%] max-w-[560px] -translate-x-1/2 -translate-y-1/2">
+    // Matches the card shape + gradient of PromptCardVisual and
+    // InfrastructureCardVisual so the value-prop set feels like one
+    // family.
+    <div
+      className="relative aspect-[3/2] w-full overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.45)]"
+      style={{ backgroundImage: CARD_GRADIENT }}
+    >
+      <div className="absolute left-1/2 top-1/2 w-[82%] max-w-[460px] -translate-x-1/2 -translate-y-1/2">
         <div className="grid items-center [&>*]:col-start-1 [&>*]:row-start-1">
           <Phase visible={effectiveStep === 0}>
             <PromptPhase typed={displayText} isDone={isTypingDone} />

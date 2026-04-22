@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CTAButton } from "./CTAButton";
+import { EmailCTA } from "./EmailCTA";
 
 // Final-CTA scroll reveal, fiasco.design-style — but applied to the
 // original dark section design, not a lime card. The content (heading,
@@ -110,7 +110,7 @@ export function FinalCTA({ heading, subheading }) {
           </p>
         )}
         <div className="flex justify-center">
-          <CTAButton variant="primary" />
+          <EmailCTA />
         </div>
       </div>
     </section>

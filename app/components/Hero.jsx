@@ -1,6 +1,13 @@
-import { CTAButton } from "./CTAButton";
+import { EmailCTA } from "./EmailCTA";
+import { LogoStrip } from "./LogoStrip";
 
-export function Hero({ eyebrow, heading, subheading }) {
+export function Hero({
+  eyebrow,
+  heading,
+  subheading,
+  alphaLabel,
+  alphaLogos,
+}) {
   return (
     <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 pb-20 pt-32 md:pb-28 md:pt-40">
       <div>
@@ -15,8 +22,22 @@ export function Hero({ eyebrow, heading, subheading }) {
         <p className="mb-8 max-w-[620px] text-[1.05rem] leading-[1.6] text-white/65">
           {subheading}
         </p>
-        <CTAButton variant="primary" />
+        <EmailCTA />
       </div>
+
+      {/* Alpha-user credential strip — absorbed into the hero from its
+          former standalone section so the social proof lands in the
+          first view. Uses the dark variant of LogoStrip so markup is
+          shared but text colors flip for the dark hero surface. */}
+      {alphaLogos && alphaLogos.length > 0 && (
+        <div className="mt-16 md:mt-24">
+          <LogoStrip
+            label={alphaLabel}
+            logos={alphaLogos}
+            variant="dark"
+          />
+        </div>
+      )}
     </section>
   );
 }

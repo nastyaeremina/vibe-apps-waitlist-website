@@ -1,11 +1,8 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { NarrativeBlock } from "./components/NarrativeBlock";
-import { LogoStrip } from "./components/LogoStrip";
 import { ValueProps } from "./components/ValueProps";
-import { ValuePropsStory } from "./components/ValuePropsStory";
 import { ComparisonTable } from "./components/ComparisonTable";
-import { Steps } from "./components/Steps";
 import { Testimonials } from "./components/Testimonials";
 import { Benefits } from "./components/Benefits";
 import { FAQ } from "./components/FAQ";
@@ -37,6 +34,8 @@ export default function Home() {
             eyebrow={c.hero.eyebrow}
             heading={c.hero.heading}
             subheading={c.hero.subheading}
+            alphaLabel={c.logoStrip.label}
+            alphaLogos={c.logoStrip.logos}
           />
         </ZoomHero>
 
@@ -49,21 +48,14 @@ export default function Home() {
         body={c.whyAssemblyStudio.body}
       />
 
-      <LogoStrip label={c.logoStrip.label} logos={c.logoStrip.logos} />
-
-      {/* Mobile — standard stacked/split value prop sections. Story mode is
-          desktop-only (requires sticky content area + scroll-marker layout
-          that doesn't make sense on a narrow viewport). */}
-      <div className="md:hidden">
-        <Reveal>
-          <ValueProps items={c.valueProps} />
-        </Reveal>
-      </div>
-
-      {/* Desktop — story mode: sticky menu + content, scroll-driven. */}
-      <div className="hidden md:block">
-        <ValuePropsStory items={c.valueProps} />
-      </div>
+      {/* All breakpoints — stacked value prop sections that scroll with
+          the page. The old desktop story-mode (sticky menu + scroll
+          markers) pinned content and took over native scroll, which
+          read as hijacking. Using the mobile layout everywhere keeps
+          scroll feel native. */}
+      <Reveal>
+        <ValueProps items={c.valueProps} />
+      </Reveal>
 
       <Reveal>
         <ComparisonTable
@@ -77,14 +69,6 @@ export default function Home() {
       </Reveal>
 
       <Reveal>
-        <Steps
-          eyebrow={c.howItWorks.eyebrow}
-          heading={c.howItWorks.heading}
-          steps={c.howItWorks.steps}
-        />
-      </Reveal>
-
-      <Reveal>
         <Testimonials
           eyebrow={c.testimonials.eyebrow}
           heading={c.testimonials.heading}
@@ -92,14 +76,6 @@ export default function Home() {
           stat={c.testimonials.stat}
           statCaption={c.testimonials.statCaption}
           quotes={c.testimonials.quotes}
-        />
-      </Reveal>
-
-      <Reveal>
-        <Benefits
-          eyebrow={c.benefits.eyebrow}
-          heading={c.benefits.heading}
-          items={c.benefits.items}
         />
       </Reveal>
 

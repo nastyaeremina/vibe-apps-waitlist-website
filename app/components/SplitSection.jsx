@@ -1,6 +1,7 @@
 import clsx from "clsx";
 
 export function SplitSection({
+  id,
   orientation = "text-left",
   eyebrow,
   heading,
@@ -10,7 +11,7 @@ export function SplitSection({
 }) {
   const textRight = orientation === "text-right";
   return (
-    <section className="gradient-divider py-20 md:py-24">
+    <section id={id} className="gradient-divider py-20 md:py-24">
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 md:grid-cols-2 md:gap-16">
         <div className={clsx(textRight && "md:order-2")}>
           {eyebrow && (

@@ -78,7 +78,14 @@ export function NarrativeBlock({ eyebrow, heading, body }) {
   };
 
   return (
-    <section ref={ref} className="bg-[#F5F5F0] py-20 md:py-24">
+    // NarrativeBlock now closes the off-white chapter (LogoStrip was
+    // absorbed into the Hero), so the rounded bottom that used to live
+    // on LogoStrip moves here — same radii as before to keep the same
+    // card-edge read at the chapter boundary.
+    <section
+      ref={ref}
+      className="bg-[#F5F5F0] py-20 rounded-b-[28px] md:py-24 md:rounded-b-[36px]"
+    >
       <div className="mx-auto max-w-5xl px-6">
         {/* Eyebrow styled to match the Hero eyebrow exactly —
             `mono text-xs uppercase tracking-[0.08em] text-white/40` —

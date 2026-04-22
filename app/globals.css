@@ -80,10 +80,11 @@ body::-webkit-scrollbar {
   display: none;
 }
 
-::selection {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-}
+/* Use the browser's default text selection — no custom color. The
+   page has both dark and light sections, and forcing a single
+   selection color for both was making text unreadable on one of
+   them. Browser defaults (typically a neutral blue) work for all
+   backgrounds. */
 
 .mono {
   font-family: var(--font-mono);
@@ -163,6 +164,23 @@ body::-webkit-scrollbar {
 }
 .studio-ship-arrow {
   animation: studio-ship-arrow 1.6s ease-in-out infinite;
+}
+
+/* ── Autofill override ──
+   Chrome paints a light blue background on inputs it recognizes
+   (autofill / paste). On our dark pill form that reads as a jarring
+   blue slab. The inset-shadow trick is unreliable across Chrome
+   versions; clipping the background to text removes the blue slab
+   entirely while still letting the text render. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-background-clip: text;
+  background-clip: text;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 /* ── Reduced motion ── */

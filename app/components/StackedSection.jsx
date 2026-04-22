@@ -1,6 +1,6 @@
-export function StackedSection({ eyebrow, heading, body, visual, cta }) {
+export function StackedSection({ id, eyebrow, heading, body, visual, cta }) {
   return (
-    <section className="gradient-divider py-20 md:py-24">
+    <section id={id} className="gradient-divider py-20 md:py-24">
       <div className="mx-auto max-w-4xl px-6 text-left md:text-center">
         {eyebrow && (
           <span className="mono mb-4 block text-xs uppercase tracking-[0.08em] text-white/40">
