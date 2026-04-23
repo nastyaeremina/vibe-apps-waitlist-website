@@ -559,26 +559,31 @@ function CompanyHeader({ activeTab }) {
         <ChevronRight />
         <span className="text-[11px] text-[#101010]">Acme Legal</span>
       </div>
-      {/* Tabs — active tab's accent line sits on the row's border line
-          via -mb-px, so the two lines overlap instead of floating. */}
-      <div className="flex items-center gap-4 border-b border-[#eef0f2] px-4">
+      {/* Tabs — active tab's accent line is absolutely positioned at the
+          row's bottom so it sits exactly on the gray separator instead
+          of floating above it at fractional mobile render scales. */}
+      <div className="relative flex items-center gap-4 border-b border-[#eef0f2] px-4">
         {tabs.map((t) => {
           const isActive = t.id === activeTab;
           return (
             <span
               key={t.id}
               className={clsx(
-                "py-2 text-[11px] transition-colors duration-[250ms]",
-                isActive
-                  ? "-mb-px border-b border-[#101010] text-[#101010]"
-                  : "text-[#6b6f76]",
+                "relative flex-shrink-0 whitespace-nowrap py-2 text-[11px] transition-colors duration-[250ms]",
+                isActive ? "text-[#101010]" : "text-[#6b6f76]",
               )}
             >
               {t.label}
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-[#101010]"
+                />
+              )}
             </span>
           );
         })}
-        <span className="flex items-center gap-0.5 py-2 text-[11px] text-[#6b6f76]">
+        <span className="flex flex-shrink-0 items-center gap-0.5 whitespace-nowrap py-2 text-[11px] text-[#6b6f76]">
           9 more
           <svg
             width="10"

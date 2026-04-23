@@ -205,9 +205,9 @@ function HomePanel() {
           {actions.map((a) => (
             <div
               key={a.label}
-              className="flex items-center justify-between rounded-[4px] border border-[#eff1f4] bg-white px-2 py-[7px]"
+              className="flex items-center justify-between gap-1 overflow-hidden rounded-[4px] border border-[#eff1f4] bg-white px-2 py-[7px]"
             >
-              <div className="flex items-center gap-1">
+              <div className="flex min-w-0 items-center gap-1">
                 {a.iconSrc ? (
                   <img
                     src={a.iconSrc}
@@ -215,15 +215,18 @@ function HomePanel() {
                     aria-hidden="true"
                     width={10}
                     height={10}
+                    className="flex-shrink-0"
                   />
                 ) : (
                   a.iconNode
                 )}
-                <span className="text-[10px] font-medium text-[#6b6f76]">
+                <span className="truncate text-[10px] font-medium text-[#6b6f76]">
                   {a.label}
                 </span>
               </div>
-              <span className="text-[10px] text-[#212b36]">{a.count}</span>
+              <span className="flex-shrink-0 text-[10px] text-[#212b36]">
+                {a.count}
+              </span>
             </div>
           ))}
         </div>
