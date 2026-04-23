@@ -101,23 +101,24 @@ function PanelHeader({ title, trailing }) {
 // Three simple stat cards + a lightweight onboarding-progress list so
 // the homepage reads as "where the team starts their day" without
 // looking like a data dump.
-function StatCard({ label, value, delta, deltaPositive }) {
+function StatCard({ label, value, delta, trend }) {
+  // trend: "up" (green ↑), "down" (red ↓), or undefined.
+  const deltaColor =
+    trend === "up" ? "#3d7d2d" : trend === "down" ? "#c4452d" : "#6b6f76";
+  const arrow = trend === "up" ? "↑" : trend === "down" ? "↓" : null;
   return (
     <div className="rounded-[5px] border border-[#eef0f2] bg-white px-2.5 py-2">
-      <div className="text-[9px] uppercase tracking-[0.06em] text-[#6b6f76]">
-        {label}
-      </div>
-      <div className="mt-0.5 flex items-baseline gap-1.5">
-        <span className="text-[16px] font-semibold leading-none text-[#101010]">
+      <div className="text-[9px] text-[#6b6f76]">{label}</div>
+      <div className="mt-0.5 flex items-baseline gap-1">
+        <span className="text-[14px] font-semibold leading-none text-[#101010]">
           {value}
         </span>
         {delta && (
           <span
-            className={clsx(
-              "text-[9px] font-medium",
-              deltaPositive ? "text-[#3d7d2d]" : "text-[#6b6f76]",
-            )}
+            className="flex items-baseline gap-[2px] text-[9px] font-medium"
+            style={{ color: deltaColor }}
           >
+            {arrow && <span aria-hidden="true">{arrow}</span>}
             {delta}
           </span>
         )}
@@ -126,18 +127,94 @@ function StatCard({ label, value, delta, deltaPositive }) {
   );
 }
 
-function OnboardingProgressRow({ name, step, total, pct }) {
+// Growth trend chart — line stays near zero through most of April with
+// small humps, then climbs steeply from early May. Y-axis shows 0/50/100
+// on the left; X-axis labels every 3 days from Apr 12 → May 6. Shape
+// mirrors the dashboard reference.
+function TrendChart() {
+  const xLabels = [
+    "Apr 12",
+    "Apr 15",
+    "Apr 18",
+    "Apr 21",
+    "Apr 24",
+    "Apr 27",
+    "Apr 30",
+    "May 3",
+    "May 6",
+  ];
+  // 9 data points evenly spaced across viewBox width 200 (step = 25).
+  // Y is inverted (0 = top). Lower y = higher on chart.
+  // Flat-ish along the bottom with small humps, then steep climb at end.
+  const ys = [52, 52, 50, 46, 50, 46, 44, 30, 10];
+  const xs = ys.map((_, i) => i * 25);
+  const line = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x} ${ys[i]}`).join(" ");
+  const area = `${line} L200 55 L0 55 Z`;
+  // Horizontal gridlines for the 0/50/100 marks. Y=55 is the baseline
+  // (value 0), Y=30 ≈ 50, Y=5 ≈ 100. Keeps the math simple for a small
+  // sparkline-sized chart.
+  const yTicks = [
+    { label: "100", y: 5 },
+    { label: "50", y: 30 },
+    { label: "0", y: 55 },
+  ];
+
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5">
-      <span className="flex-1 truncate text-[10px] text-[#212b36]">{name}</span>
-      <span className="w-[70px] text-[9px] text-[#6b6f76]">
-        Step {step} / {total}
-      </span>
-      <div className="h-[3px] w-[70px] overflow-hidden rounded-full bg-[#eef0f2]">
-        <div
-          className="h-full rounded-full bg-[#101010]/75"
-          style={{ width: `${pct}%` }}
-        />
+    <div className="mt-2">
+      <div className="flex">
+        {/* Y-axis labels */}
+        <div className="relative mr-1 h-[58px] w-[18px] flex-shrink-0">
+          {yTicks.map((t) => (
+            <span
+              key={t.label}
+              className="absolute right-0 -translate-y-1/2 text-[7px] text-[#6b6f76]"
+              style={{ top: `${(t.y / 60) * 100}%` }}
+            >
+              {t.label}
+            </span>
+          ))}
+        </div>
+        {/* Chart area */}
+        <div className="relative h-[58px] flex-1">
+          <svg
+            viewBox="0 0 200 60"
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full"
+            aria-hidden="true"
+          >
+            {/* Horizontal gridlines aligned with Y labels */}
+            {yTicks.map((t) => (
+              <line
+                key={t.label}
+                x1="0"
+                y1={t.y}
+                x2="200"
+                y2={t.y}
+                stroke="#f0f1f3"
+                strokeWidth="0.5"
+              />
+            ))}
+            {/* Area fill under the curve */}
+            <path d={area} fill="rgba(61,125,45,0.08)" />
+            {/* Trend line */}
+            <path
+              d={line}
+              fill="none"
+              stroke="#3d7d2d"
+              strokeWidth="1.25"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      </div>
+      {/* X-axis labels — offset by Y-axis gutter so ticks align under chart */}
+      <div className="mt-1 flex pl-[22px]">
+        <div className="flex flex-1 justify-between text-[7px] text-[#6b6f76]">
+          {xLabels.map((l) => (
+            <span key={l}>{l}</span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -148,33 +225,42 @@ function DashboardPanel() {
     <div className="flex h-full flex-col">
       <PanelHeader title="Dashboard" />
       <div className="flex-1 overflow-hidden px-5 py-3">
-        {/* Greeting */}
+        {/* Date + greeting */}
+        <div className="mb-0.5 text-[10px] text-[#6b6f76]">Monday, May 27</div>
         <div className="mb-3 text-[13px] font-semibold text-[#101010]">
-          Good morning, Martin
+          Good morning, John 👋
         </div>
 
-        {/* Stat cards */}
-        <div className="mb-4 grid grid-cols-3 gap-1.5">
-          <StatCard label="Active clients" value="24" delta="+3" deltaPositive />
-          <StatCard label="Onboarding" value="6" delta="in progress" />
-          <StatCard label="Kickoffs this week" value="4" />
-        </div>
-
-        {/* Onboarding progress */}
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-medium text-[#212b36]">
-            Onboarding in progress
+        {/* Stat cards + trend chart wrapped in a single outer container */}
+        <div className="mb-3 rounded-[6px] border border-[#eef0f2] bg-white p-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            <StatCard label="Clients" value="2,000" delta="10%" trend="up" />
+            <StatCard label="Active clients" value="1467" delta="45%" trend="up" />
+            <StatCard label="Active subscriptions" value="280" delta="-100%" trend="down" />
           </div>
-          <div className="text-[9px] text-[#6b6f76]">This week</div>
+
+          {/* Trend chart */}
+          <TrendChart />
         </div>
-        <div className="overflow-hidden rounded-[5px] border border-[#eef0f2]">
-          <OnboardingProgressRow name="Acme Legal" step={4} total={4} pct={100} />
-          <div className="border-t border-[#f0f1f3]" />
-          <OnboardingProgressRow name="Northstar Advisory" step={3} total={4} pct={75} />
-          <div className="border-t border-[#f0f1f3]" />
-          <OnboardingProgressRow name="Helio" step={2} total={4} pct={50} />
-          <div className="border-t border-[#f0f1f3]" />
-          <OnboardingProgressRow name="Park & Co. CPAs" step={1} total={4} pct={25} />
+
+        {/* Latest release */}
+        <div className="mt-5">
+          <div className="mb-1 text-[10px] font-medium text-[#212b36]">
+            Latest release
+          </div>
+          <div className="rounded-[5px] border border-[#eef0f2] bg-white px-2.5 py-2">
+            <div className="text-[10px] font-semibold text-[#101010]">
+              Assembly MCP for Claude &amp; ChatGPT
+            </div>
+            <p className="mt-0.5 text-[9px] leading-[1.45] text-[#6b6f76]">
+              Connect Assembly to Claude and ChatGPT through the Assembly MCP
+              server. Your apps, CRM, and client data become tools your team can
+              query from either assistant.
+            </p>
+            <div className="mt-1.5 inline-flex rounded-[4px] border border-[#dfe1e4] bg-white px-1.5 py-[2px] text-[9px] text-[#212b36]">
+              See all releases
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -183,14 +269,73 @@ function DashboardPanel() {
 
 // ── CRM → Companies list panel (phase 1) ────────────────────────────────
 // Matches the Assembly CRM reference: sub-tabs Companies | Contacts,
-// row per company with a square company avatar + domain, a contact
-// avatar + name in the second column (or "N contacts" link for
-// multiples), and a Created date. Cursor glides over the top row and
+// row per company with a small colored company avatar + name, a single
+// contact (empty outline + name) in the second column, and a Tier
+// badge ("Active") in the third. Cursor glides over the top row and
 // presses near the end of the phase to hand off to the Company view.
+// ── Shared animated cursor ─────────────────────────────────────────────
+// Rendered over a specific target (CRM row, Onboarding tab, etc.) and
+// driven by `cursorPhase`:
+//   hidden    → invisible
+//   entering  → faded in, offset from target (eases toward it)
+//   hovering  → on target, full size
+//   clicking  → on target, pressed (scale down)
+// Position is configured via `x`/`y` (final hover coords in px from the
+// absolutely-positioned parent), and `enterOffsetX`/`enterOffsetY`
+// (how far off-target the cursor starts during the `entering` phase).
+function AnimatedCursor({ phase, x, y, enterOffsetX = 60, enterOffsetY = 90 }) {
+  // Clicking uses a much shorter transition and a more pronounced
+  // scale-down (0.72 vs resting 1.0) so the press reads as a crisp
+  // tap — without any ring/ripple or extra chrome.
+  const durationClass =
+    phase === "hidden"
+      ? "duration-[200ms]"
+      : phase === "clicking"
+      ? "duration-[140ms]"
+      : "duration-[900ms]";
+  return (
+    <div
+      aria-hidden="true"
+      className={clsx(
+        "pointer-events-none absolute transition-[transform,opacity] ease-[cubic-bezier(0.22,0.61,0.36,1)]",
+        phase === "hidden" ? "opacity-0" : "opacity-100",
+        durationClass,
+      )}
+      style={{
+        left: `${x}px`,
+        top: `${y}px`,
+        transform:
+          phase === "hidden" || phase === "entering"
+            ? `translate(${enterOffsetX}px, ${enterOffsetY}px) scale(0.95)`
+            : phase === "clicking"
+            ? "translate(0, 0) scale(0.72)"
+            : "translate(0, 0) scale(1)",
+        transformOrigin: "top left",
+      }}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 18 18"
+        fill="none"
+        style={{ filter: "drop-shadow(0 1px 2px rgba(16,16,16,0.18))" }}
+      >
+        <path
+          d="M2.5 1.5 L2.5 14 L5.8 11 L8 15.2 L10 14.4 L7.8 10.2 L12.2 10.2 Z"
+          fill="#101010"
+          stroke="#ffffff"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
 function CompanyAvatar({ initials, bg, fg }) {
   return (
     <div
-      className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-[4px] text-[9px] font-semibold"
+      className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-[4px] text-[10px] font-normal"
       style={{ backgroundColor: bg, color: fg }}
     >
       {initials}
@@ -198,59 +343,103 @@ function CompanyAvatar({ initials, bg, fg }) {
   );
 }
 
-function ContactAvatar({ initials, bg, fg }) {
+function ContactChip({ initials, bg, fg }) {
+  // Circular contact avatar — initials + paired bg/fg from the shared
+  // palette (see `CONTACT_AVATARS` below). Same chip used across the
+  // Contacts column; each row picks its own color combo so the list
+  // reads as a real roster rather than a placeholder.
   return (
-    <div
-      className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full text-[9px] font-medium"
+    <span
+      className="flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center rounded-full text-[9px] font-normal"
       style={{ backgroundColor: bg, color: fg }}
     >
       {initials}
-    </div>
+    </span>
   );
 }
 
-function RowCheckbox() {
+// Shared avatar palette — 8 muted pastel/earth-tone pairs matching the
+// design spec swatches. Each pair is a pale tinted bg with a deeper,
+// desaturated fg of the same hue family (not straight black on color).
+// Ordered so rows read with variety (no two neighbors share a hue).
+const CONTACT_AVATARS = [
+  { bg: "#f3f4f5", fg: "#1a1a1a" }, // neutral gray → near-black
+  { bg: "#dae8dc", fg: "#4d7f6c" }, // eucalyptus mint → muted teal
+  { bg: "#e1dbef", fg: "#7864a8" }, // pale lavender → dusty purple
+  { bg: "#eed8d8", fg: "#a35859" }, // dusty rose → muted maroon
+  { bg: "#f7f1e4", fg: "#a4751f" }, // cream → ochre / mustard
+  { bg: "#dff3f9", fg: "#649eaf" }, // pale cyan → muted teal-blue
+  { bg: "#ebf3e7", fg: "#75876e" }, // pale green → muted sage
+  { bg: "#ebdcef", fg: "#8860a0" }, // pale lilac → plum
+];
+
+function TierPill({ label = "Active" }) {
   return (
-    <span className="flex h-[14px] w-[14px] flex-shrink-0 items-center justify-center rounded-full border border-[#dfe1e4] bg-white" />
+    <span className="inline-flex items-center self-center rounded-full bg-[#dff5d3] px-1.5 py-[1px] text-[9px] font-medium text-[#3d7d2d]">
+      {label}
+    </span>
   );
 }
 
 function CompaniesPanel({ cursorPhase }) {
+  // 10 rows so the list reads as a real client roster; overflow below
+  // the panel clips naturally (mirrors the reference screenshot).
+  // Company avatars reuse the updated palette for visual cohesion with
+  // the new contact avatars.
   const rows = [
     {
       name: "Acme Legal",
-      domain: "acme-legal.com",
-      avatar: { initials: "AL", bg: "#e6efff", fg: "#3866c0" },
-      contact: { name: "Bernard Simons", initials: "BS", bg: "#dff3f9", fg: "#649eaf" },
-      created: "8/19/2024",
+      avatar: { initials: "AL", ...CONTACT_AVATARS[5] }, // slate blue
+      contactName: "Bernard Simons",
+      contactAvatar: { initials: "BS", ...CONTACT_AVATARS[2] }, // lavender
     },
     {
       name: "Northstar Advisory",
-      domain: "northstar.co",
-      avatar: { initials: "N", bg: "#101010", fg: "#ffffff" },
-      contact: { name: "Dana Reyes", initials: "DR", bg: "#ffe2c9", fg: "#b36a2d" },
-      created: "7/02/2024",
+      avatar: { initials: "NA", ...CONTACT_AVATARS[0] }, // neutral
+      contactName: "Dana Reyes",
+      contactAvatar: { initials: "DR", ...CONTACT_AVATARS[1] }, // mint
     },
     {
       name: "Helio",
-      domain: "helio.io",
-      avatar: { initials: "H", bg: "#fff1c5", fg: "#8a6d0d" },
-      contacts: 2,
-      created: "6/14/2024",
+      avatar: { initials: "HE", ...CONTACT_AVATARS[4] }, // cream/gold
+      contactName: "Jordan Hale",
+      contactAvatar: { initials: "JH", ...CONTACT_AVATARS[5] }, // slate blue
     },
     {
       name: "Park & Co. CPAs",
-      domain: "parkco.com",
-      avatar: { initials: "P", bg: "#dff5d3", fg: "#3d7d2d" },
-      contact: { name: "Evelyn Park", initials: "EP", bg: "#ffe4ec", fg: "#b8477a" },
-      created: "5/28/2024",
+      avatar: { initials: "PC", ...CONTACT_AVATARS[6] }, // sage
+      contactName: "Evelyn Park",
+      contactAvatar: { initials: "EP", ...CONTACT_AVATARS[3] }, // rose
     },
     {
       name: "Runway Legal",
-      domain: "runwaylegal.com",
-      avatar: { initials: "R", bg: "#f0eaff", fg: "#7f69b5" },
-      contact: { name: "Marcus Lin", initials: "ML", bg: "#eef0f2", fg: "#6b6f76" },
-      created: "4/10/2024",
+      avatar: { initials: "RL", ...CONTACT_AVATARS[7] }, // lilac
+      contactName: "Marcus Lin",
+      contactAvatar: { initials: "ML", ...CONTACT_AVATARS[4] }, // cream/gold
+    },
+    {
+      name: "Maple Creative",
+      avatar: { initials: "MC", ...CONTACT_AVATARS[3] }, // rose
+      contactName: "Priya Shah",
+      contactAvatar: { initials: "PS", ...CONTACT_AVATARS[6] }, // sage
+    },
+    {
+      name: "Vanguard Tax",
+      avatar: { initials: "VT", ...CONTACT_AVATARS[1] }, // mint
+      contactName: "Oliver Nash",
+      contactAvatar: { initials: "ON", ...CONTACT_AVATARS[4] }, // cream/gold
+    },
+    {
+      name: "Harbor Design",
+      avatar: { initials: "HD", ...CONTACT_AVATARS[2] }, // lavender
+      contactName: "Tessa Wu",
+      contactAvatar: { initials: "TW", ...CONTACT_AVATARS[7] }, // lilac
+    },
+    {
+      name: "Lennox Group",
+      avatar: { initials: "LG", ...CONTACT_AVATARS[0] }, // neutral
+      contactName: "Aiden Rivera",
+      contactAvatar: { initials: "AR", ...CONTACT_AVATARS[1] }, // mint
     },
   ];
   // Index 0 is the row the cursor targets.
@@ -270,103 +459,60 @@ function CompaniesPanel({ cursorPhase }) {
         <span className="py-2 text-[11px] text-[#6b6f76]">Contacts</span>
       </div>
 
-      {/* Table — cols: Company | Contacts | Created */}
+      {/* Table — cols: Company | Contacts | Tier. Flat chrome to match
+          the Assembly CRM reference: no wrapping box, no gray fill on the
+          header; rows separated by hairlines only. Proportional columns
+          so the Tier pill always has room. */}
       <div className="relative flex-1 overflow-hidden px-4 py-2">
-        <div className="overflow-hidden rounded-[5px] border border-[#eef0f2]">
-          <div className="grid grid-cols-[1.5fr_1fr_70px] gap-2 border-b border-[#eef0f2] bg-[#f8f9fb] px-2.5 py-1.5 text-[9px] font-medium text-[#6b6f76]">
+        <div>
+          <div className="grid grid-cols-[1.6fr_1.2fr_0.7fr] gap-2 border-b border-[#eef0f2] px-2.5 py-2 text-[10px] font-normal text-[#6b6f76]">
             <span>Company</span>
             <span>Contacts</span>
-            <span>Created</span>
+            <span>Tier</span>
           </div>
           {rows.map((row, i) => {
-            const hovered =
-              i === targetIndex &&
-              (cursorPhase === "hovering" || cursorPhase === "clicking");
+            const isTarget = i === targetIndex;
+            const hovered = isTarget && cursorPhase === "hovering";
+            // Click uses a only-slightly-darker tint so the press reads
+            // as a soft state change — not the muddy gray of a full
+            // selection highlight. Paired with the cursor's scale-down
+            // this gives a gentle "tap" feel.
+            const clicked = isTarget && cursorPhase === "clicking";
             return (
               <div
                 key={row.name}
                 className={clsx(
-                  "grid grid-cols-[1.5fr_1fr_70px] items-center gap-2 border-b border-[#f4f5f7] px-2.5 py-1.5 text-[10px] text-[#212b36] last:border-b-0 transition-colors duration-[200ms]",
-                  hovered && "bg-[#f4f6f9]",
+                  "grid grid-cols-[1.6fr_1.2fr_0.7fr] items-center gap-2 border-b border-[#f1f2f4] px-2.5 py-2.5 text-[11px] text-[#212b36] last:border-b-0 transition-colors duration-[180ms]",
+                  hovered && "bg-[#f6f8fa]",
+                  clicked && "bg-[#eef1f4]",
                 )}
               >
-                {/* Company — checkbox + square avatar + name/domain */}
+                {/* Company — avatar + name */}
                 <div className="flex min-w-0 items-center gap-2">
-                  <RowCheckbox />
                   <CompanyAvatar {...row.avatar} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[10px] font-medium text-[#212b36]">
-                      {row.name}
-                    </div>
-                    <div className="truncate text-[9px] text-[#6b6f76]">
-                      {row.domain}
-                    </div>
-                  </div>
+                  <span className="truncate text-[11px] font-normal text-[#212b36]">
+                    {row.name}
+                  </span>
                 </div>
-                {/* Contacts — circle avatar + name, or "N contacts" link */}
+                {/* Contacts — colored initials avatar + name */}
                 <div className="flex min-w-0 items-center gap-1.5">
-                  {row.contacts ? (
-                    <span className="truncate text-[10px] text-[#212b36] underline decoration-dotted decoration-[#c9cbcd] underline-offset-[2px]">
-                      {row.contacts} contacts
-                    </span>
-                  ) : (
-                    <>
-                      <ContactAvatar {...row.contact} />
-                      <span className="truncate text-[10px] text-[#212b36]">
-                        {row.contact.name}
-                      </span>
-                    </>
-                  )}
+                  <ContactChip {...row.contactAvatar} />
+                  <span className="truncate text-[11px] text-[#212b36]">
+                    {row.contactName}
+                  </span>
                 </div>
-                {/* Created date */}
-                <span className="truncate text-[10px] text-[#6b6f76]">
-                  {row.created}
-                </span>
+                {/* Tier — green "Active" pill, left-aligned in its column
+                    to read as a clear third column (matches reference). */}
+                <div className="flex min-w-0 items-center">
+                  <TierPill label="Active" />
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Cursor — anchored to the target row's center. */}
-        <div
-          aria-hidden="true"
-          className={clsx(
-            "pointer-events-none absolute transition-[transform,opacity] ease-[cubic-bezier(0.22,0.61,0.36,1)]",
-            cursorPhase === "hidden"
-              ? "opacity-0 duration-[200ms]"
-              : "opacity-100 duration-[900ms]",
-          )}
-          style={{
-            // The target row sits ~34px below the header bar + ~8px
-            // padding. Anchor cursor's tip roughly over the row's
-            // middle-left (the company name).
-            left: "70px",
-            top: "58px",
-            transform:
-              cursorPhase === "hidden" || cursorPhase === "entering"
-                ? "translate(60px, 90px) scale(0.95)"
-                : cursorPhase === "clicking"
-                ? "translate(0, 0) scale(0.88)"
-                : "translate(0, 0) scale(1)",
-            transformOrigin: "top left",
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 18 18"
-            fill="none"
-            style={{ filter: "drop-shadow(0 1px 2px rgba(16,16,16,0.18))" }}
-          >
-            <path
-              d="M2.5 1.5 L2.5 14 L5.8 11 L8 15.2 L10 14.4 L7.8 10.2 L12.2 10.2 Z"
-              fill="#101010"
-              stroke="#ffffff"
-              strokeWidth="1"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
+        {/* Cursor — anchored to the target row's center (company name). */}
+        <AnimatedCursor phase={cursorPhase} x={70} y={58} />
       </div>
     </div>
   );
@@ -449,25 +595,6 @@ function CompanyHeader({ activeTab }) {
           </svg>
         </span>
       </div>
-      {/* Contact selector */}
-      <div className="flex items-center border-b border-[#eef0f2] px-4 py-2">
-        <div className="flex items-center gap-1 rounded-[4px] border border-[#dfe1e4] bg-white px-2 py-[3px] text-[10px] text-[#212b36]">
-          Bernard Simons
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
-      </div>
     </>
   );
 }
@@ -477,59 +604,93 @@ function CompanyHeader({ activeTab }) {
 // date chips separate the thread by day, each message carries an
 // empty circle avatar + name + time label, and bodies are plain
 // paragraphs (no bubbles).
-function MessageDateChip({ label, align = "right" }) {
+function MessageDateChip({ label, align = "center" }) {
+  // Centered by default — the StudioSurface overflows the visible card
+  // on the right (w-[120%]), so right-aligning the chip pushes it past
+  // the card edge. Center reads as a normal thread date separator and
+  // stays inside the viewable panel.
+  // Border + shadow tuned a touch stronger than "real" iOS-style chips
+  // so the badge still reads at the card's small render scale.
+  const justify =
+    align === "right"
+      ? "justify-end"
+      : align === "left"
+      ? "justify-start"
+      : "justify-center";
   return (
-    <div className={clsx("flex py-1", align === "right" ? "justify-end" : "justify-start")}>
-      <div className="rounded-[4px] border border-[#eef0f2] bg-white px-1.5 py-[1px] text-[9px] text-[#212b36]">
+    <div className={clsx("flex py-1.5", justify)}>
+      <div className="rounded-[4px] border border-[#d0d4d9] bg-white px-2 py-[3px] text-[10px] font-normal text-[#212b36]">
         {label}
       </div>
     </div>
   );
 }
 
-function EmptyAvatar() {
+// Initials avatar used in the message thread — same circular chip style
+// as `ContactChip` but sized a bit larger since message rows carry more
+// text per row. Pulls bg/fg from the shared `CONTACT_AVATARS` palette.
+function MessageAvatar({ initials, bg, fg }) {
   return (
-    <div className="h-[18px] w-[18px] flex-shrink-0 rounded-full border border-[#dfe1e4] bg-white" />
+    <span
+      className="flex h-[24px] w-[24px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-normal"
+      style={{ backgroundColor: bg, color: fg }}
+    >
+      {initials}
+    </span>
   );
 }
 
-function ThreadMessage({ name, time, body }) {
+function ThreadMessage({ name, time, body, avatar }) {
   return (
-    <div className="flex items-start gap-2">
-      <EmptyAvatar />
+    <div className="flex items-start gap-2.5">
+      <MessageAvatar {...avatar} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 text-[10px] leading-[1.4]">
-          <span className="font-medium text-[#212b36]">{name}</span>
-          <span className="text-[#6b6f76]">{time}</span>
+        <div className="flex items-center gap-1.5 leading-[1.4]">
+          <span className="text-[11px] font-medium text-[#212b36]">{name}</span>
+          <span className="text-[10px] text-[#6b6f76]">{time}</span>
         </div>
-        <p className="text-[10px] leading-[1.5] text-[#212b36]">{body}</p>
+        <p className="text-[11px] leading-[1.5] text-[#212b36]">{body}</p>
       </div>
     </div>
   );
 }
 
 function CompanyMessagesBody() {
+  // Keep Bernard Simons' avatar in sync with his CRM-row chip (lavender)
+  // so the same person reads as the same person across screens.
+  const bernardAvatar = { initials: "BS", ...CONTACT_AVATARS[2] };
+  const charlotteAvatar = { initials: "CB", ...CONTACT_AVATARS[0] };
+
   return (
-    <div className="flex-1 overflow-hidden px-4 py-2">
-      <MessageDateChip label="Wed, Sep 4" align="right" />
-      <div className="space-y-2 py-1">
+    <div className="flex-1 overflow-hidden px-5 py-3">
+      <MessageDateChip label="Wed, Sep 4" />
+      <div className="space-y-3 py-1.5">
         <ThreadMessage
           name="Bernard Simons"
           time="1:37 PM"
           body="Hi Jennifer, can you tell me more about SEO?"
+          avatar={bernardAvatar}
         />
         <ThreadMessage
           name="Charlotte Beaty"
           time="1:56 PM"
           body="Absolutely, Charles! SEO is about improving your website’s visibility — optimizing content, targeting the right keywords, and building links to boost credibility."
+          avatar={charlotteAvatar}
         />
       </div>
-      <MessageDateChip label="Fri, Sep 6" align="right" />
-      <div className="space-y-2 py-1">
+      <MessageDateChip label="Fri, Sep 6" />
+      <div className="space-y-3 py-1.5">
         <ThreadMessage
           name="Bernard Simons"
           time="1:37 PM"
-          body="That sounds interesting — what would make it work for a firm like ours?"
+          body="That sounds interesting — what would make it work for a firm like ours? We mostly get clients through referrals today, so I want to understand where SEO fits in without pulling budget away from what already works."
+          avatar={bernardAvatar}
+        />
+        <ThreadMessage
+          name="Charlotte Beaty"
+          time="2:04 PM"
+          body="Great question — for firms like yours, SEO usually complements referrals rather than replacing them. We'd start with a content plan around the practice areas you want to grow."
+          avatar={charlotteAvatar}
         />
       </div>
     </div>
@@ -537,49 +698,112 @@ function CompanyMessagesBody() {
 }
 
 // ── Company Onboarding panel (phase 3) ──────────────────────────────────
-// Displays the responses the client submitted in the generated
-// onboarding wizard — structured but simplified.
-function OnboardingField({ label, value, multiline }) {
+// Shows the list of onboarding forms required for this client and who
+// at the client's team submitted each one. Mixes Completed / Pending
+// states so the team can see progress at a glance. Layout matches the
+// flat-table chrome used on the CRM list (no wrapping box, hairline
+// separators, sentence-case column headers).
+function StatusPill({ variant, label }) {
+  // Green = completed, amber = pending. Inline-flex keeps the pill
+  // centered on its row with no extra wrapper.
+  const styles =
+    variant === "completed"
+      ? "bg-[#ebf3e7] text-[#3d7d2d]"
+      : "bg-[#fdf3d9] text-[#8a6d0d]";
   return (
-    <div>
-      <div className="mb-0.5 text-[9px] uppercase tracking-[0.06em] text-[#6b6f76]">
-        {label}
-      </div>
-      <div
-        className={clsx(
-          "rounded-[4px] border border-[#eef0f2] bg-white px-2 text-[10px] text-[#212b36]",
-          multiline ? "py-1.5 leading-[1.5]" : "h-[26px] leading-[26px]",
-        )}
-      >
-        {value}
-      </div>
-    </div>
+    <span
+      className={clsx(
+        "inline-flex items-center self-center rounded-full px-1.5 py-[1px] text-[9px] font-medium",
+        styles,
+      )}
+    >
+      {label}
+    </span>
   );
 }
 
 function CompanyOnboardingBody() {
+  // Each form has either a submitter (completed) or null (pending).
+  const forms = [
+    {
+      name: "Intake form",
+      submitter: { initials: "BS", name: "Bernard Simons", ...CONTACT_AVATARS[2] },
+      status: "completed",
+      date: "Sep 4",
+    },
+    {
+      name: "Engagement letter",
+      submitter: { initials: "BS", name: "Bernard Simons", ...CONTACT_AVATARS[2] },
+      status: "completed",
+      date: "Sep 4",
+    },
+    {
+      name: "Team roster",
+      submitter: { initials: "EP", name: "Evelyn Park", ...CONTACT_AVATARS[3] },
+      status: "completed",
+      date: "Sep 5",
+    },
+    {
+      name: "Brand assets",
+      submitter: null,
+      status: "pending",
+      date: null,
+    },
+    {
+      name: "Billing details",
+      submitter: null,
+      status: "pending",
+      date: null,
+    },
+  ];
+
   return (
     <div className="flex-1 overflow-hidden px-4 py-3">
-      <div className="mb-2">
-        <div className="text-[11px] font-medium text-[#212b36]">
-          Intake responses
+      {/* Forms list — flat table, sentence-case column headers */}
+      <div>
+        <div className="grid grid-cols-[1.3fr_1.4fr_0.9fr] gap-2 border-b border-[#eef0f2] px-2.5 py-2 text-[10px] font-normal text-[#6b6f76]">
+          <span>Form</span>
+          <span>Submitted by</span>
+          <span>Status</span>
         </div>
-        <span className="mt-1 inline-block rounded-full bg-[#dff5d3] px-1.5 py-[1px] text-[9px] font-medium text-[#3d7d2d]">
-          Complete
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <OnboardingField label="Business name" value="Acme Legal" />
-        <OnboardingField label="Industry" value="Law firm" />
-        <OnboardingField label="Team size" value="5–10 people" />
-        <OnboardingField label="Primary contact" value="Bernard Simons" />
-      </div>
-      <div className="mt-2">
-        <OnboardingField
-          label="Goals for this engagement"
-          value="Launch a refreshed brand and client portal by Q3. Focus on inbound leads."
-          multiline
-        />
+        {forms.map((f) => (
+          <div
+            key={f.name}
+            className="grid grid-cols-[1.3fr_1.4fr_0.9fr] items-center gap-2 border-b border-[#f1f2f4] px-2.5 py-2 text-[11px] text-[#212b36] last:border-b-0"
+          >
+            {/* Form name */}
+            <span className="truncate text-[11px] text-[#212b36]">
+              {f.name}
+            </span>
+            {/* Submitter — avatar + name, or em-dash placeholder */}
+            <div className="flex min-w-0 items-center gap-1.5">
+              {f.submitter ? (
+                <>
+                  <ContactChip
+                    initials={f.submitter.initials}
+                    bg={f.submitter.bg}
+                    fg={f.submitter.fg}
+                  />
+                  <span className="truncate text-[11px] text-[#212b36]">
+                    {f.submitter.name}
+                  </span>
+                </>
+              ) : (
+                <span className="text-[11px] text-[#9097a0]">—</span>
+              )}
+            </div>
+            {/* Status — pill + date when completed */}
+            <div className="flex min-w-0 items-center gap-1.5">
+              <StatusPill
+                variant={f.status}
+                label={f.status === "completed" ? "Completed" : "Pending"}
+              />
+              {f.date && (
+                <span className="text-[10px] text-[#6b6f76]">{f.date}</span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -595,12 +819,21 @@ function MainCanvas({ phaseId, cursorPhase }) {
   // Company detail — Messages tab by default, Onboarding once clicked.
   const activeTab = phaseId === "onboarding" ? "onboarding" : "messages";
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       <CompanyHeader activeTab={activeTab} />
       {activeTab === "messages" ? (
         <CompanyMessagesBody />
       ) : (
         <CompanyOnboardingBody />
+      )}
+      {/* Messages-phase cursor — aimed at the Onboarding tab label in
+          the CompanyHeader tab row. Tab row sits below the 40px crumb,
+          py-2 adds ~8px of top padding → tab text center ~y 52.
+          Horizontally: px-4 (16) + "Messages" label (~56) + gap-4 (16)
+          puts the Onboarding tab start around x 88. Cursor tip sits
+          slightly inside the label. */}
+      {phaseId === "messages" && (
+        <AnimatedCursor phase={cursorPhase} x={100} y={48} />
       )}
     </div>
   );
@@ -721,20 +954,30 @@ export function StudioAppCardVisual() {
   // completes one full revolution per video loop.
   const loopMs = PHASES.reduce((s, p) => s + p.duration, 0);
 
-  // Cursor choreography for the CRM phase (phase index 1).
+  // Cursor choreography — runs for both CRM (clicks a company row) and
+  // Messages (clicks the Onboarding tab). The target differs per phase
+  // but the animation states are identical: entering → hovering → click
+  // just before the phase transitions, so the click "causes" the next
+  // phase in the narrative.
   useEffect(() => {
     if (!inView) return;
     const activeId = PHASES[phase].id;
-    if (activeId !== "crm") {
+    if (activeId !== "crm" && activeId !== "messages") {
       setCursorPhase("hidden");
       return;
     }
     const timers = [];
     setCursorPhase("entering");
-    timers.push(setTimeout(() => setCursorPhase("hovering"), 700));
-    // Press near the end so the phase transition feels like the click
-    // opened the company.
-    timers.push(setTimeout(() => setCursorPhase("clicking"), 3600));
+    if (activeId === "crm") {
+      // CRM phase (4200ms): click ~3600ms in — phase flips at 4200ms.
+      timers.push(setTimeout(() => setCursorPhase("hovering"), 700));
+      timers.push(setTimeout(() => setCursorPhase("clicking"), 3600));
+    } else {
+      // Messages phase (4200ms): cursor appears later so viewer has
+      // time to read the thread before it moves up to click Onboarding.
+      timers.push(setTimeout(() => setCursorPhase("hovering"), 2000));
+      timers.push(setTimeout(() => setCursorPhase("clicking"), 3600));
+    }
     return () => timers.forEach((t) => clearTimeout(t));
   }, [phase, inView]);
 
