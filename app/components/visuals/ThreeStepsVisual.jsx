@@ -34,8 +34,14 @@ const THINKING_STEPS = [
 ];
 
 // Timing budget per phase (ms). Tuned so the viewer reads each beat
-// without feeling rushed; the sum defines the loop length.
-const PHASE_DURATIONS = [6200, 5200, 5200];
+// without feeling rushed; the sum defines the loop length. Phase 2
+// absorbs the brief loading-state beat that precedes the cascade.
+const PHASE_DURATIONS = [6200, 5200, 6000];
+
+// How long the Result phase shows its empty-shell loading state before
+// the sidebar cascade starts populating. Sized to read as "app is
+// rendering" without stalling the loop.
+const RESULT_LOADING_MS = 800;
 
 // Matches the inner-card treatment used across value-prop visuals so
 // the whole set reads as one family.
@@ -410,6 +416,7 @@ const WIZARD_FIELDS = [
 ];
 
 function ResultPhase({ active, paused }) {
+  const [ready, setReady] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
   const [badgeVisible, setBadgeVisible] = useState(false);
   const [wizardHeader, setWizardHeader] = useState(false);
@@ -417,6 +424,7 @@ function ResultPhase({ active, paused }) {
 
   useEffect(() => {
     if (!active) {
+      setReady(false);
       setRevealCount(0);
       setBadgeVisible(false);
       setWizardHeader(false);
@@ -426,12 +434,17 @@ function ResultPhase({ active, paused }) {
     if (paused) return; // Freeze cascade at current reveal.
 
     const timers = [];
-    // Cascade the sidebar rows.
+    // Brief loading-state beat: the empty app shell renders first with
+    // a centered loader so the result reads as "the generated app is
+    // opening" instead of appearing fully-formed.
+    timers.push(setTimeout(() => setReady(true), RESULT_LOADING_MS));
+
+    // Cascade the sidebar rows — offset by the loading beat.
     STUDIO_NAV.forEach((_, i) => {
       timers.push(
         setTimeout(
           () => setRevealCount((c) => Math.max(c, i + 1)),
-          120 + i * 55,
+          RESULT_LOADING_MS + 120 + i * 55,
         ),
       );
     });
@@ -440,16 +453,18 @@ function ResultPhase({ active, paused }) {
     timers.push(
       setTimeout(
         () => setBadgeVisible(true),
-        120 + onboardingIndex * 55 + 280,
+        RESULT_LOADING_MS + 120 + onboardingIndex * 55 + 280,
       ),
     );
     // Wizard in the main canvas — header first, then fields.
-    timers.push(setTimeout(() => setWizardHeader(true), 850));
+    timers.push(
+      setTimeout(() => setWizardHeader(true), RESULT_LOADING_MS + 850),
+    );
     WIZARD_FIELDS.forEach((_, i) => {
       timers.push(
         setTimeout(
           () => setFieldCount((c) => Math.max(c, i + 1)),
-          1100 + i * 170,
+          RESULT_LOADING_MS + 1100 + i * 170,
         ),
       );
     });
@@ -468,6 +483,36 @@ function ResultPhase({ active, paused }) {
         "absolute left-[5%] top-[8%] h-[130%] w-[120%] overflow-hidden rounded-tl-[14px] rounded-tr-[14px] rounded-br-0 rounded-bl-0 bg-white shadow-[0_20px_50px_-25px_rgba(16,16,16,0.35)]",
       )}
     >
+      {/* Loading overlay — minimal skeleton shimmer blocks that hint at
+          the sidebar + wizard layout before real content cascades in. */}
+      <div
+        aria-hidden="true"
+        className={clsx(
+          "pointer-events-none absolute inset-0 z-10 flex bg-white transition-opacity duration-[450ms] ease-out",
+          ready ? "opacity-0" : "opacity-100",
+        )}
+      >
+        {/* Sidebar skeleton — lime background matches the real chrome. */}
+        <div
+          className="flex w-[200px] flex-shrink-0 flex-col gap-3 px-3 pt-5"
+          style={{ backgroundColor: SIDEBAR_BG }}
+        >
+          <div className="studio-shimmer h-3 w-[60%] rounded-[4px]" />
+          <div className="studio-shimmer h-2.5 w-[50%] rounded-[4px]" />
+          <div className="studio-shimmer h-2.5 w-[45%] rounded-[4px]" />
+        </div>
+        {/* Main canvas skeleton — one header block + two content blocks. */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-[36px] items-center border-b border-[#eef0f2] px-4">
+            <div className="studio-shimmer h-2.5 w-16 rounded-[4px]" />
+          </div>
+          <div className="flex-1 space-y-3 px-6 py-6">
+            <div className="studio-shimmer h-3 w-[50%] rounded-[4px]" />
+            <div className="studio-shimmer h-[30px] w-full rounded-[4px]" />
+          </div>
+        </div>
+      </div>
+
       <div className="flex h-full">
         {/* Sidebar — lime-branded client view (matches
             ClientPortalVisual's chrome). */}

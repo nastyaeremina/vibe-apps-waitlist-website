@@ -164,6 +164,31 @@ body::-webkit-scrollbar {
   }
 }
 
+/* ── Skeleton shimmer ──
+   Gradient sweeps left-to-right across a base block to signal loading.
+   Used in the Result phase of ThreeStepsVisual for the brief "app is
+   opening" beat before real content populates. */
+@keyframes studio-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.studio-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    rgba(16, 16, 16, 0.06) 0%,
+    rgba(16, 16, 16, 0.11) 50%,
+    rgba(16, 16, 16, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-color: rgba(16, 16, 16, 0.06);
+  animation: studio-shimmer 1.4s linear infinite;
+}
+
 /* ── Studio "ship" arrow nudge ── */
 @keyframes studio-ship-arrow {
   0%,
