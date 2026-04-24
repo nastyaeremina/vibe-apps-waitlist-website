@@ -622,8 +622,12 @@ function MessageDateChip({ label, align = "center" }) {
       : align === "left"
       ? "justify-start"
       : "justify-center";
+  // Main canvas is w-[120%] of the outer card so its right edge runs
+  // off the visible card. A plain `justify-center` lands at 50% of the
+  // oversized canvas — i.e. right of the visible centre. Pad the right
+  // so the chip reads as centred against what the user actually sees.
   return (
-    <div className={clsx("flex py-1.5", justify)}>
+    <div className={clsx("flex py-1.5 pr-[20%]", justify)}>
       <div className="rounded-[4px] border border-[#d0d4d9] bg-white px-2 py-[3px] text-[10px] font-normal text-[#212b36]">
         {label}
       </div>
