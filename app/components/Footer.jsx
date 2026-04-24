@@ -36,7 +36,7 @@ export function Footer() {
         <img
           src="/logos/mobile-logo.svg"
           alt={SITE.brand}
-          className="h-7 w-auto"
+          className="h-6 w-auto"
         />
       </a>
 
