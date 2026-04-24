@@ -434,7 +434,7 @@ function MessagesPanel() {
           small amount of bottom clipping is desired so the composer
           feels like it runs off the screen edge (matches the
           reference screenshot). */}
-      <div className="absolute inset-x-4 bottom-[33%] overflow-hidden rounded-[6px] border border-[#e5e7eb] bg-white">
+      <div className="absolute inset-x-4 bottom-[18%] overflow-hidden rounded-[6px] border border-[#e5e7eb] bg-white sm:bottom-[33%]">
         {/* Toolbar — lists (text formatting) first, then B/I/U styling. */}
         <div className="flex items-center gap-2 border-b border-[#eef0f2] bg-[#f8f9fb] px-2 py-1.5 text-[#6b6f76]">
           <ComposerIcon kind="bullet" />
