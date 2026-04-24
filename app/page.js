@@ -2,7 +2,7 @@ import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { NarrativeBlock } from "./components/NarrativeBlock";
 import { ValueProps } from "./components/ValueProps";
-import { ComparisonTable } from "./components/ComparisonTable";
+import { ComparisonSpec } from "./components/ComparisonSpec";
 import { Testimonials } from "./components/Testimonials";
 import { Benefits } from "./components/Benefits";
 import { FAQ } from "./components/FAQ";
@@ -76,9 +76,9 @@ export default function Home() {
       </Reveal>
 
       <Reveal>
-        <ComparisonTable
+        <ComparisonSpec
           heading={c.comparison.heading}
-          firstColumnLabel={c.comparison.firstColumnLabel}
+          headingCallout={c.comparison.headingCallout}
           leftLabel={c.comparison.leftLabel}
           rightLabel={c.comparison.rightLabel}
           rows={c.comparison.rows}

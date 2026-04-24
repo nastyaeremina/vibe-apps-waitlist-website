@@ -64,7 +64,11 @@ export const HOME_CONTENT = {
   comparison: {
     // Heading intentionally differs from the whyAssemblyStudio heading
     // ("Not another app builder") so the page doesn't repeat itself.
-    heading: "Built for clients, not prototypes",
+    // The heading splits onto two lines: primary claim on top, a
+    // dimmed "coda" below — mirrors the NarrativeBlock headline
+    // pattern used earlier in the page.
+    heading: "Built for clients",
+    headingCallout: "not prototypes",
     firstColumnLabel: "Where we differ",
     leftLabel: "Lovable / Replit",
     rightLabel: "Assembly Studio",
