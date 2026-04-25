@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { SITE } from "../config/site";
 
 // Scroll to the hero email input and focus it. Single-source email entry
@@ -71,137 +71,140 @@ export function Header() {
   const pillRef = useRef(null);
   const ctaRef = useRef(null);
   const logoRef = useRef(null);
-  // Which surface is currently behind the nav pill. Drives color inversion
-  // — Voiceflow-style: dark pill / white logo on dark sections, light
-  // pill / black logo on off-white sections (NarrativeBlock + light
-  // LogoStrip). Default to "dark" since the hero is dark and sits at the
-  // top of the page.
-  const [theme, setTheme] = useState("dark");
 
-  // Watch any section tagged with `data-nav-theme="light"`. When such a
-  // section crosses the nav's horizontal strip (top ~0-60px of the
-  // viewport), flip the theme to "light". Anything else → "dark".
-  // Detection is position-based (rect.top vs. a threshold) rather than
-  // a pure IntersectionObserver ratio, because the nav only cares about
-  // what sits directly behind it, not how much of the section is in view.
+  // Single rAF-driven update that computes BOTH the dock progress
+  // (scrollY / SCROLL_RANGE — drives the pill materializing in) AND
+  // the chapter tint progress (sentinel position vs. viewport — drives
+  // the dark→light theme cross-fade). Pill bg/border + logo invert are
+  // interpolated continuously between the two themes by the chapter
+  // progress, so the nav eases through the transition along with the
+  // page background tint instead of hard-flipping at a threshold.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const lightSections = Array.from(
-      document.querySelectorAll('[data-nav-theme="light"]'),
-    );
-    if (lightSections.length === 0) return;
-
-    // The pill sits around y=12–60px. We flip to "light" once any
-    // tagged section's top has crossed below y=60 and its bottom is
-    // still below y=0. Check cheaply on scroll.
-    const NAV_BAND_TOP = 0;
-    const NAV_BAND_BOTTOM = 60;
-
-    const check = () => {
-      let inLight = false;
-      for (const s of lightSections) {
-        const r = s.getBoundingClientRect();
-        if (r.top <= NAV_BAND_BOTTOM && r.bottom >= NAV_BAND_TOP) {
-          inLight = true;
-          break;
-        }
-      }
-      setTheme(inLight ? "light" : "dark");
-    };
-
-    check();
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => {
-      window.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-    };
-  }, []);
-
-  useEffect(() => {
     const header = headerRef.current;
     const pill = pillRef.current;
     const cta = ctaRef.current;
     const logo = logoRef.current;
     if (!header || !pill) return;
 
-    const isLight = theme === "light";
+    // Light-chapter sentinels (same selector ScrollTintedChapter watches).
+    // Re-queried on each resize via the resize handler so dynamically
+    // injected sections still register if they ever appear later.
+    let lightSections = Array.from(
+      document.querySelectorAll('[data-nav-theme="light"]'),
+    );
 
-    // Pill fill / border — dark pill over dark sections, light pill
-    // over off-white sections. Alpha at peak stays the same (~0.7) so
-    // the translucent feel is preserved on both surfaces.
-    const pillFill = isLight
-      ? "255, 255, 255" // light: white pill, darkens whatever sits behind
-      : "48, 48, 48"; // dark: charcoal pill
-    const pillBorder = isLight
-      ? "0, 0, 0" // light: subtle dark outline
-      : "255, 255, 255"; // dark: subtle white outline
-    const pillBorderAlphaMax = isLight ? 0.08 : 0.12;
+    // Dark / light pill+border tokens — the same values used in the
+    // hard-flip version, just split into rgb arrays so we can lerp.
+    const DARK_PILL_RGB = [48, 48, 48];
+    const LIGHT_PILL_RGB = [255, 255, 255];
+    const DARK_BORDER_RGB = [255, 255, 255];
+    const LIGHT_BORDER_RGB = [0, 0, 0];
+    const DARK_BORDER_ALPHA_MAX = 0.12;
+    const LIGHT_BORDER_ALPHA_MAX = 0.08;
+
+    const clamp01 = (n) => Math.max(0, Math.min(1, n));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const lerpRgb = (a, b, t) => [
+      Math.round(lerp(a[0], b[0], t)),
+      Math.round(lerp(a[1], b[1], t)),
+      Math.round(lerp(a[2], b[2], t)),
+    ];
+    const ease = (t) =>
+      t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+    // Same chapter-tint formula as ScrollTintedChapter (kept in sync
+    // intentionally — both compute t from the same sentinel rects so
+    // the bg fade and the nav fade move together perfectly).
+    const LOCK_PX = 80;
+    const computeChapterTint = () => {
+      if (lightSections.length === 0) return 0;
+      let max = 0;
+      for (const s of lightSections) {
+        const r = s.getBoundingClientRect();
+        const vh = window.innerHeight;
+        const fadeIn = clamp01((vh - r.top) / (vh - LOCK_PX));
+        const fadeOut = clamp01(r.bottom / (vh - LOCK_PX));
+        const t = Math.min(fadeIn, fadeOut);
+        if (t > max) max = t;
+      }
+      return ease(max);
+    };
 
     let raf = null;
     const apply = () => {
       raf = null;
-      const p = Math.max(0, Math.min(1, window.scrollY / SCROLL_RANGE));
-      // easeOutQuad — front-loaded but not as abrupt as pure linear.
-      // Keeps the pill visibly changing from the first pixel of scroll
-      // instead of a slow-start curve like cubic.
+
+      // Dock progress (pill materializing as the user scrolls past
+      // the hero). Same easing curve as before.
+      const p = clamp01(window.scrollY / SCROLL_RANGE);
       const e = 1 - Math.pow(1 - p, 2);
 
-      // Pill background, border, blur — all fade in together.
-      pill.style.backgroundColor = `rgba(${pillFill}, ${e * 0.7})`;
-      pill.style.borderColor = `rgba(${pillBorder}, ${e * pillBorderAlphaMax})`;
+      // Chapter tint progress (0 = fully dark theme, 1 = fully light).
+      const tint = computeChapterTint();
+
+      // Interpolated pill + border tokens. RGB lerps between the two
+      // themes; alpha multipliers also lerp so the light theme can use
+      // its quieter border alpha.
+      const pillRgb = lerpRgb(DARK_PILL_RGB, LIGHT_PILL_RGB, tint);
+      const borderRgb = lerpRgb(DARK_BORDER_RGB, LIGHT_BORDER_RGB, tint);
+      const borderAlphaMax = lerp(
+        DARK_BORDER_ALPHA_MAX,
+        LIGHT_BORDER_ALPHA_MAX,
+        tint,
+      );
+
+      pill.style.backgroundColor = `rgba(${pillRgb[0]}, ${pillRgb[1]}, ${pillRgb[2]}, ${e * 0.7})`;
+      pill.style.borderColor = `rgba(${borderRgb[0]}, ${borderRgb[1]}, ${borderRgb[2]}, ${e * borderAlphaMax})`;
+
       const blur = e * 10;
       const blurValue = blur > 0.1 ? `blur(${blur}px)` : "none";
       pill.style.backdropFilter = blurValue;
       pill.style.webkitBackdropFilter = blurValue;
 
-      // Very soft shadow — just enough to hint at elevation without
-      // reading as a floating chrome bar.
       pill.style.boxShadow = `0 ${4 * e}px ${16 * e}px -${10 * e}px rgba(0, 0, 0, ${0.2 * e})`;
 
-      // Slight compacting: pill shrinks very subtly (1 → 0.98) so the
-      // transformation reads as the nav "settling in" rather than
-      // expanding outward.
       const scale = 1 - e * 0.02;
       pill.style.transform = `scale(${scale})`;
-
-      // Top offset tightens a touch as the pill docks.
       header.style.top = `${12 - e * 2}px`;
 
-      // CTA fades in alongside the pill — the top state is just the
-      // logo (minimal, no call-to-action yet). Pointer-events gated
-      // on visibility so the invisible button isn't clickable.
       if (cta) {
         cta.style.opacity = String(e);
         cta.style.pointerEvents = e > 0.5 ? "auto" : "none";
         cta.style.transform = `translate3d(${(1 - e) * 8}px, 0, 0)`;
       }
-    };
 
-    // Logo color swap — the wordmark + mark SVGs are filled with pure
-    // white, so inverting the image turns every pixel black. Applies
-    // to the <img> via CSS filter with a smooth transition so the
-    // crossfade reads as a single material flipping, not two logos
-    // swapping. Transition is set once on mount (below) so the color
-    // change itself eases even when the state updates instantly.
-    if (logo) {
-      logo.style.filter = isLight ? "invert(1)" : "invert(0)";
-    }
+      // Logo invert filter eases continuously from 0 → 1 with the
+      // tint. Filter values transition smoothly when set frame by
+      // frame, so the wordmark crossfades from white to black in
+      // step with the bg fade.
+      if (logo) {
+        logo.style.filter = `invert(${tint})`;
+      }
+    };
 
     const onScroll = () => {
       if (raf != null) return;
       raf = requestAnimationFrame(apply);
     };
 
+    const onResize = () => {
+      // Re-collect sentinels on resize in case the layout shifted.
+      lightSections = Array.from(
+        document.querySelectorAll('[data-nav-theme="light"]'),
+      );
+      onScroll();
+    };
+
     apply();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
       if (raf != null) cancelAnimationFrame(raf);
     };
-  }, [theme]);
+  }, []);
 
   return (
     <header
@@ -227,12 +230,10 @@ export function Header() {
           backdropFilter: "none",
           WebkitBackdropFilter: "none",
           transformOrigin: "center center",
-          // Transition bg + border so the dark↔light flip eases smoothly
-          // when crossing section boundaries. The scroll listener still
-          // sets these each frame; the transition covers the gap between
-          // frames when only the theme (not scroll) has changed.
-          transition:
-            "background-color 300ms ease, border-color 300ms ease",
+          // No CSS transition on bg/border — the rAF loop sets them
+          // every frame as the user scrolls, so a CSS transition would
+          // add a lag/echo behind the live interpolation. The scroll-
+          // tied math IS the smoothing.
           willChange:
             "transform, background-color, border-color, backdrop-filter, box-shadow",
         }}
@@ -254,7 +255,6 @@ export function Header() {
             className="h-6 w-auto"
             style={{
               filter: "invert(0)",
-              transition: "filter 300ms ease",
             }}
           />
         </a>

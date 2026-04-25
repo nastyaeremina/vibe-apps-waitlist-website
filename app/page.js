@@ -11,12 +11,17 @@ import { Footer } from "./components/Footer";
 import { GradientReveal } from "./components/GradientReveal";
 import { ZoomHero } from "./components/ZoomHero";
 import { Reveal } from "./components/Reveal";
+import { ScrollTintedChapter } from "./components/ScrollTintedChapter";
 import { HOME_CONTENT } from "./content/home";
 
 export default function Home() {
   const c = HOME_CONTENT;
   return (
     <div className="min-h-screen">
+      {/* Tints the page background between dark and cream as the
+          light chapter (ComparisonSpec + Testimonials) enters and
+          exits the viewport. Pure side-effect — renders nothing. */}
+      <ScrollTintedChapter />
       {/* Header is rendered OUTSIDE GradientReveal so its `position:
           fixed` actually anchors to the viewport. GradientReveal
           applies a `translate3d` to its content frame for the bottom-
@@ -77,11 +82,16 @@ export default function Home() {
 
       {/* Off-white chapter — ComparisonSpec + Testimonials read as a
           single light-mode interlude between the dark ValueProps and
-          dark FAQ. Hard color edges (no gradient transition): the
-          background flips on mount of this wrapper and back when the
-          wrapper ends. data-nav-theme="light" lets the fixed nav
-          re-color itself for legibility on the cream surface. */}
-      <div data-nav-theme="light" className="bg-[#F5F5F0]">
+          dark FAQ. The page background interpolates smoothly from
+          dark to cream and back as the chapter enters/exits the
+          viewport — driven by ScrollTintedChapter (mounted at the
+          top of the page tree). The wrapper itself has no static bg;
+          only the tag attributes are needed:
+          - data-tinted-section="light" is the position sentinel
+            that ScrollTintedChapter watches.
+          - data-nav-theme="light" still triggers the nav's own
+            300ms light-mode flip for the pill, border, and logo. */}
+      <div data-nav-theme="light" data-tinted-section="light">
         <Reveal>
           <ComparisonSpec
             theme="light"
