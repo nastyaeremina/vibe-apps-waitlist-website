@@ -23,6 +23,7 @@ export const HOME_CONTENT = {
         {
           u: "reliable",
           preview: {
+            side: "right",
             visual: "qualityBadge",
             visualProps: { label: "99.9% uptime" },
             body: "Runs on Assembly's platform — monitored, backed up, SOC 2 in progress.",
@@ -32,6 +33,7 @@ export const HOME_CONTENT = {
         {
           u: "unified",
           preview: {
+            side: "left",
             visual: "qualityBadge",
             visualProps: { label: "One workspace" },
             body: "One CRM, one portal, one permissions model across every app.",
@@ -41,6 +43,7 @@ export const HOME_CONTENT = {
         {
           u: "polished",
           preview: {
+            side: "right",
             visual: "qualityBadge",
             visualProps: { label: "Production-ready" },
             body: "Branded, typography and spacing dialed in, empty states handled.",
@@ -53,6 +56,7 @@ export const HOME_CONTENT = {
         {
           u: "client onboarding wizard",
           preview: {
+            side: "right",
             visual: "appMock",
             visualProps: {
               title: "Onboarding",
@@ -65,6 +69,7 @@ export const HOME_CONTENT = {
         {
           u: "deliverable approval flow",
           preview: {
+            side: "right",
             visual: "appMock",
             visualProps: {
               title: "Approvals",
@@ -77,6 +82,7 @@ export const HOME_CONTENT = {
         {
           u: "client community space",
           preview: {
+            side: "left",
             visual: "appMock",
             visualProps: {
               title: "Community",
@@ -90,6 +96,7 @@ export const HOME_CONTENT = {
         {
           u: "existing contacts and team",
           preview: {
+            side: "left",
             visual: "contacts",
             body: "Shares your CRM — update a contact once, every app follows.",
           },
@@ -98,6 +105,7 @@ export const HOME_CONTENT = {
         {
           u: "permissions",
           preview: {
+            side: "right",
             visual: "permissions",
             body: "Row-level access, enforced at the data layer.",
           },
@@ -106,6 +114,7 @@ export const HOME_CONTENT = {
         {
           u: "integrates notifications",
           preview: {
+            side: "left",
             visual: "notifications",
             body: "One unified feed — email, in-product, and mobile.",
           },
@@ -114,6 +123,7 @@ export const HOME_CONTENT = {
         {
           u: "native part of your client experience",
           preview: {
+            side: "right",
             visual: "portalMini",
             body: "Ships into your branded portal — no separate URL or login.",
           },
@@ -125,8 +135,9 @@ export const HOME_CONTENT = {
         {
           u: "library of vetted apps",
           preview: {
+            side: "right",
             visual: "library",
-            body: "21 production-ready apps: messaging, payments, intake, proposals, and more.",
+            body: "21 production-ready apps — messaging, payments, intake, proposals, and more.",
           },
         },
         " that you can enable in one click — for client messaging, payments, proposals, project management, and more. Don't rebuild the 80% that's been perfected over years of iteration. Focus on the 20% that makes you different.",

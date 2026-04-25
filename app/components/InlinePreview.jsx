@@ -1,98 +1,56 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 
-// EDITORIAL HOVER PREVIEW
+// EDITORIAL INLINE TRIGGER + DETAIL PANEL VISUALS
 //
-// Wraps an underlined phrase in a paragraph and reveals a floating card
-// on hover, so dense editorial copy can elaborate inline without forcing
-// the reader to leave the paragraph.
+// Previously this component rendered a floating, glass-styled tooltip
+// that portaled to <body>. The new design replaces that with an
+// anchored, in-flow detail panel rendered by NarrativeBlock — see
+// NarrativeBlock.jsx. This file now exposes:
 //
-// The preview card is PORTALED to document.body so it escapes any
-// transformed / opacity-animated ancestors on the page. That matters
-// because CSS `backdrop-filter` only sees through the nearest ancestor
-// that establishes a "backdrop root" (anything with transform, opacity<1,
-// filter, etc.). NarrativeBlock uses transform+opacity on its body
-// wrapper for the reveal animation, which scoped the filter and left the
-// text behind the card perfectly crisp. Rendering via portal lifts the
-// card up to <body>, so the filter reads the entire page as its backdrop
-// and produces real glass.
-const TOOLTIP_WIDTH = 300;
-const TOOLTIP_GAP = 12;
+//   - InlineTrigger: an underlined phrase that, on hover/focus, asks
+//     the parent to elaborate on it via callbacks. Reports active
+//     state up so the parent can show ONE panel at a time.
+//
+//   - DetailPanel: the right-side panel shown by NarrativeBlock,
+//     rendered with smooth content swaps as the user moves between
+//     phrases.
+//
+//   - Visuals (PortalMiniPreview, AppMockPreview, …): unchanged —
+//     small mini-UI cards reused inside the detail panel as a subtle
+//     accompaniment to the title/body copy.
 
-export function InlinePreview({ text, preview }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const [mounted, setMounted] = useState(false);
-  // Touch devices have no hover, and adding a tap-toggle interferes with
-  // reading and scrolling. On those devices we skip the tooltip entirely
-  // — the underlined phrase still renders for emphasis.
+// ── Inline trigger ─────────────────────────────────────────────────
+//
+// Triggers only wire up hover/focus when the viewport is wide enough
+// to actually fit the side detail panels (xl, 1280px+) AND the device
+// has a real hover capability. Below that breakpoint, or on touch /
+// no-hover devices, we render just the underline — the editorial
+// emphasis still reads, but no panel work fires. NarrativeBlock
+// uses the same breakpoint to swap between split-column and single-
+// column layouts, so the two stay in sync.
+const TRIGGER_MEDIA_QUERY =
+  "(min-width: 1280px) and (hover: hover) and (pointer: fine)";
+
+export function InlineTrigger({
+  text,
+  preview,
+  onActivate,
+  onDeactivate,
+  isActive,
+}) {
   const [canHover, setCanHover] = useState(false);
-  const triggerRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const closeTimer = useRef(null);
 
-  // Portal target is only available on the client.
-  useEffect(() => setMounted(true), []);
-
-  // Detect hover capability and keep it in sync if the input mode
-  // changes (e.g. user plugs in a mouse on a hybrid device).
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const mq = window.matchMedia(TRIGGER_MEDIA_QUERY);
     const update = () => setCanHover(mq.matches);
     update();
     mq.addEventListener?.("change", update);
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  // Compute tooltip position based on the trigger's viewport rect. Runs
-  // on open, and on scroll/resize while open so the card tracks the
-  // phrase if the page moves underneath it.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const update = () => {
-      const t = triggerRef.current;
-      if (!t) return;
-      // When the phrase wraps across lines, getBoundingClientRect()
-      // returns a box spanning every line — so centering on it lands
-      // the tooltip in empty space above the paragraph rather than
-      // next to the actual trigger. Use getClientRects() and anchor
-      // to the first line's rect (tooltip renders above the trigger).
-      const rects = t.getClientRects();
-      const r = rects.length ? rects[0] : t.getBoundingClientRect();
-      const tooltipH = tooltipRef.current?.offsetHeight ?? 120;
-      const centerX = r.left + r.width / 2;
-      // Clamp horizontally so the card doesn't spill past the viewport.
-      const half = TOOLTIP_WIDTH / 2;
-      const left = Math.max(
-        8 + half,
-        Math.min(window.innerWidth - 8 - half, centerX),
-      );
-      const top = r.top - TOOLTIP_GAP - tooltipH;
-      setPos({ top, left });
-    };
-    update();
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [open]);
-
-  // Small open/close lag so the card doesn't flicker when the cursor
-  // travels from phrase to card across a few pixels of gap.
-  const scheduleClose = () => {
-    clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(false), 120);
-  };
-  const cancelClose = () => clearTimeout(closeTimer.current);
-
-  // On touch devices, render just the underlined phrase — no wrapper
-  // span, no event handlers, no portal. The emphasis still reads; we
-  // don't fight the device's interaction model.
   if (!canHover) {
     return (
       <span className="underline decoration-[#1A1A1A]/40 underline-offset-[3px]">
@@ -101,81 +59,98 @@ export function InlinePreview({ text, preview }) {
     );
   }
 
+  // The trigger is a single span — no portal, no positioning. The
+  // underline thickens slightly when active so the reader can see
+  // which phrase the right-side panel is currently elaborating on.
   return (
     <span
-      ref={triggerRef}
-      className="relative inline"
-      onMouseEnter={() => {
-        cancelClose();
-        setOpen(true);
-      }}
-      onMouseLeave={scheduleClose}
-      onFocus={() => setOpen(true)}
-      onBlur={() => scheduleClose()}
+      tabIndex={0}
+      onMouseEnter={() => onActivate?.(preview)}
+      onFocus={() => onActivate?.(preview)}
+      onMouseLeave={() => onDeactivate?.(preview)}
+      onBlur={() => onDeactivate?.(preview)}
+      className={[
+        "cursor-default underline underline-offset-[3px] outline-none transition-colors duration-200",
+        isActive
+          ? "decoration-[#1A1A1A]/80 text-[#1A1A1A]"
+          : "decoration-[#1A1A1A]/40",
+      ].join(" ")}
     >
-      <span
-        tabIndex={0}
-        className="cursor-default underline decoration-[#1A1A1A]/40 underline-offset-[3px] outline-none focus-visible:decoration-[#1A1A1A]/70"
+      {text}
+    </span>
+  );
+}
+
+// ── Detail panel ───────────────────────────────────────────────────
+//
+// Rendered to the right of the body paragraphs (desktop only). It
+// holds whichever preview the reader has most recently activated. On
+// content swap, the inner block fades + slides in from a small offset
+// (animation defined in globals.css → .narrative-detail-in) — subtle
+// enough not to compete with the prose, distinct enough to signal
+// that the elaboration tracks the trigger. The panel is intentionally
+// text-only — no mini-UI mock cards — so the section reads as
+// editorial commentary rather than a product demo with tooltips.
+
+// The panel content always reads left-to-right (text-left). Only the
+// eyebrow's em-rule swaps sides — on a left-margin panel the rule
+// trails the label so the marker points TOWARD the body it's
+// annotating; on a right-margin panel the rule leads the label for
+// the same reason. The mono ABC Diatype face on the eyebrow makes it
+// read as a typographic system label distinct from the prose.
+export function DetailPanel({ preview, eyebrow = "What we mean", side = "right" }) {
+  const key = preview?.title || preview?.body || "empty";
+  const isLeft = side === "left";
+
+  return (
+    <div className="text-left">
+      <div
+        className="mb-4 flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#1A1A1A]/45"
+        style={{ fontFamily: '"ABC Diatype Mono", ui-monospace, monospace' }}
       >
-        {text}
-      </span>
-      {mounted &&
-        createPortal(
-          <span
-            ref={tooltipRef}
-            role="tooltip"
-            aria-hidden={!open}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-            className="block select-none rounded-[18px] p-3 text-left"
-            style={{
-              position: "fixed",
-              top: pos.top,
-              left: pos.left,
-              width: TOOLTIP_WIDTH,
-              zIndex: 9999,
-              opacity: open ? 1 : 0,
-              transform: `translateX(-50%) translateY(${open ? "0" : "4px"})`,
-              pointerEvents: open ? "auto" : "none",
-              transition:
-                "opacity 180ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 180ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-              background: "rgba(255,255,255,0.35)",
-              backdropFilter: "blur(28px) saturate(1.5)",
-              WebkitBackdropFilter: "blur(28px) saturate(1.5)",
-              border: "1px solid rgba(255,255,255,0.55)",
-              boxShadow: [
-                "0 24px 60px -24px rgba(0,0,0,0.28)",
-                "0 8px 24px -12px rgba(0,0,0,0.12)",
-                "inset 0 1px 0 rgba(255,255,255,0.7)",
-              ].join(", "),
-            }}
-          >
-            {preview.visual && (
-              <span className="mb-2 block">{preview.visual}</span>
-            )}
+        {isLeft ? (
+          <>
+            <span>{eyebrow}</span>
+            <span className="h-px w-4 bg-[#1A1A1A]/30" />
+          </>
+        ) : (
+          <>
+            <span className="h-px w-4 bg-[#1A1A1A]/30" />
+            <span>{eyebrow}</span>
+          </>
+        )}
+      </div>
+
+      <div key={key} className="narrative-detail-in block">
+        {preview ? (
+          <>
             {preview.title && (
-              <span className="mb-0.5 block text-[12px] font-semibold tracking-[-0.005em] text-[#1A1A1A]">
+              <h3 className="mb-2 text-[0.9375rem] font-medium leading-[1.3] tracking-[-0.005em] text-[#1A1A1A]">
                 {preview.title}
-              </span>
+              </h3>
             )}
             {preview.body && (
-              <span className="block text-[11px] leading-[1.45] text-[#1A1A1A]/70">
+              <p className="text-[0.8125rem] leading-[1.55] text-[#1A1A1A]/60">
                 {preview.body}
-              </span>
+              </p>
             )}
-          </span>,
-          document.body,
+          </>
+        ) : (
+          <p className="text-[0.8125rem] leading-[1.55] text-[#1A1A1A]/40">
+            Hover any highlighted phrase to expand the meaning.
+          </p>
         )}
-    </span>
+      </div>
+    </div>
   );
 }
 
 // ── Miniature preview visuals ──
 //
-// Each visual is a small mini-UI card — a soft frame with a header label
-// and 1–2 rows of content — sized to hint at the concept without looking
-// like a full app screen. The shared CardShell provides a subtle inner
-// frame that sits on top of the glass tooltip.
+// Each visual is a small mini-UI card — a soft frame with a header
+// label and 1–2 rows of content — sized to hint at the concept
+// without looking like a full app screen. The shared CardShell
+// provides a subtle inner frame that sits in the side panel.
 
 const CardShell = ({ children }) => (
   <span className="block overflow-hidden rounded-[6px] border border-[#1A1A1A]/10 bg-white/45">
@@ -206,11 +181,6 @@ export function PortalMiniPreview() {
   const [typed, setTyped] = useState(0);
   const [caretOn, setCaretOn] = useState(true);
 
-  // Type forward, pause at full, reset, repeat. Caret blink is on its
-  // own interval so it stays steady during the hold and reset phases.
-  // We track the current count in a local variable inside the effect —
-  // keeping the scheduling side-effect OUT of setTyped's updater so
-  // React StrictMode's double-invoked setter can't race the timer.
   useEffect(() => {
     let count = 0;
     let timeout;
@@ -220,7 +190,6 @@ export function PortalMiniPreview() {
         setTyped(count);
         timeout = setTimeout(tick, 90);
       } else {
-        // Hold the completed URL for a beat, then reset and restart.
         timeout = setTimeout(() => {
           count = 0;
           setTyped(0);
@@ -243,7 +212,6 @@ export function PortalMiniPreview() {
   return (
     <CardShell>
       <span className="flex items-center gap-1.5 px-2 py-1.5">
-        {/* Search / URL-bar magnifying glass */}
         <svg
           viewBox="0 0 12 12"
           aria-hidden="true"
@@ -269,9 +237,6 @@ export function PortalMiniPreview() {
           {shown || (
             <span className="text-[#1A1A1A]/35">Search or enter URL…</span>
           )}
-          {/* Blinking caret. While typing, keep it visible so the
-              rhythm reads as "keystrokes landing"; only blink during
-              the idle hold and the empty reset moment. */}
           <span
             aria-hidden="true"
             className="ml-[1px] inline-block h-[10px] w-[1px] bg-[#1A1A1A]/70"
@@ -283,13 +248,6 @@ export function PortalMiniPreview() {
   );
 }
 
-// Small mini-app card: header with a menu dots + two status rows. Good
-// for concepts like "an app running", "an approval flow", etc.
-//
-// Row glyphs are intentionally lightweight — a faint check stroke for
-// done rows, a soft hollow ring for upcoming. Solid dark fills read
-// like a page-level control (button, bullet); these rows are just a
-// status hint, so the glyph stays at low opacity and thin stroke.
 export function AppMockPreview({ title, rows = [], accent = "progress" }) {
   return (
     <CardShell>
@@ -332,8 +290,6 @@ export function AppMockPreview({ title, rows = [], accent = "progress" }) {
   );
 }
 
-// Quality badge: framed ✓ + label for intangibles like reliable /
-// unified / polished.
 export function QualityBadgePreview({ label }) {
   return (
     <CardShell>
@@ -349,7 +305,6 @@ export function QualityBadgePreview({ label }) {
   );
 }
 
-// Contacts list with header + two rows.
 export function ContactsPreview() {
   const rows = [
     { name: "Acme Legal", tag: "Client" },
@@ -380,10 +335,6 @@ export function ContactsPreview() {
   );
 }
 
-// Permissions: two role rows, each with a trailing access-level chip.
-// A matrix reads like a spreadsheet — slow to parse in a tooltip. A
-// role → chip list lets the reader skim both rows in one glance:
-// "Team can edit, Client can view."
 export function PermissionsPreview() {
   const rows = [
     { role: "Team", level: "Can edit" },
@@ -412,7 +363,6 @@ export function PermissionsPreview() {
   );
 }
 
-// Notifications stack: framed header + two items.
 export function NotificationsPreview() {
   const items = [
     { title: "New intake", sub: "Acme Legal · 2m" },
@@ -446,9 +396,6 @@ export function NotificationsPreview() {
   );
 }
 
-// App library: compact row of short app pills with a trailing "+N"
-// chip. Reads as "a library of vetted apps you can pick from" without
-// painting a full app-store grid.
 export function LibraryPreview() {
   const apps = ["Messaging", "Payments", "Intake"];
   return (
