@@ -11,7 +11,7 @@ const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 // to the initial bubble instead of showing the browser's broken-image icon.
 // Rounded *square* (not circle) — gives each photo more presence in the
 // collapsed card column.
-function Avatar({ quote, size = 56 }) {
+function Avatar({ quote, size = 56, isLight = false }) {
   const initial = (quote.name ?? "?").trim().charAt(0).toUpperCase();
   const [failed, setFailed] = useState(false);
   const showPhoto = quote.photo && !failed;
@@ -58,7 +58,11 @@ function Avatar({ quote, size = 56 }) {
   return (
     <div
       aria-hidden="true"
-      className="flex flex-none items-center justify-center rounded-[10px] border border-white/15 bg-white/[0.06] text-[15px] font-medium text-white/80"
+      className={`flex flex-none items-center justify-center rounded-[10px] border text-[15px] font-medium ${
+        isLight
+          ? "border-[#1A1A1A]/15 bg-[#1A1A1A]/[0.06] text-[#1A1A1A]/80"
+          : "border-white/15 bg-white/[0.06] text-white/80"
+      }`}
       style={sizeStyle}
     >
       {initial}
@@ -72,7 +76,7 @@ function Avatar({ quote, size = 56 }) {
 // Inactive cards show only avatar + name. Active card reveals quote and
 // attribution with a slight delay so content fades in after the width has
 // started opening — avoiding a visual "jump".
-function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
+function HorizontalAccordion({ quotes, activeIndex, onActivate, isLight = false }) {
   return (
     <div
       className="hidden h-[440px] gap-3 md:flex"
@@ -113,10 +117,15 @@ function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
               transitionTimingFunction: EASE,
             }}
             className={clsx(
-              "group relative min-w-0 cursor-pointer overflow-hidden rounded-[20px] border outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+              "group relative min-w-0 cursor-pointer overflow-hidden rounded-[20px] border outline-none",
+              isLight ? "focus-visible:ring-2 focus-visible:ring-[#1A1A1A]/40" : "focus-visible:ring-2 focus-visible:ring-white/40",
               isActive
-                ? "border-white/20 bg-white/[0.04]"
-                : "border-white/10 bg-white/[0.02] hover:border-white/15",
+                ? isLight
+                  ? "border-[#1A1A1A]/15 bg-[#1A1A1A]/[0.04]"
+                  : "border-white/20 bg-white/[0.04]"
+                : isLight
+                  ? "border-[#1A1A1A]/10 bg-[#1A1A1A]/[0.02] hover:border-[#1A1A1A]/15"
+                  : "border-white/10 bg-white/[0.02] hover:border-white/15",
             )}
           >
             {/* Inner padding; grid so children land in known rows */}
@@ -133,7 +142,7 @@ function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
                   transition: `justify-content 300ms ${EASE}`,
                 }}
               >
-                <Avatar quote={quote} size={isActive ? 56 : 68} />
+                <Avatar quote={quote} size={isActive ? 56 : 68} isLight={isLight} />
               </div>
 
               {/* Active-only: big quote + attribution. Collapsed cards hide
@@ -150,17 +159,17 @@ function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
                   }`,
                 }}
               >
-                <blockquote className="text-[1.0625rem] leading-[1.5] text-white md:text-[1.1875rem]">
+                <blockquote className={`text-[1.0625rem] leading-[1.5] md:text-[1.1875rem] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
                   “{quote.body}”
                 </blockquote>
                 <div>
                   {quote.name && (
-                    <div className="text-[14px] leading-[1.3] text-white">
+                    <div className={`text-[14px] leading-[1.3] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
                       {quote.name}
                     </div>
                   )}
                   {attribution && (
-                    <div className="mono mt-1 text-[12px] leading-[1.4] text-white/55">
+                    <div className={`mono mt-1 text-[12px] leading-[1.4] ${isLight ? "text-[#1A1A1A]/55" : "text-white/55"}`}>
                       {attribution}
                     </div>
                   )}
@@ -180,12 +189,12 @@ function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
                 }}
               >
                 {quote.name && (
-                  <div className="truncate text-[13px] leading-[1.3] text-white">
+                  <div className={`truncate text-[13px] leading-[1.3] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
                     {quote.name}
                   </div>
                 )}
                 {quote.title && (
-                  <div className="mono mt-1 truncate text-[11px] leading-[1.3] text-white/55">
+                  <div className={`mono mt-1 truncate text-[11px] leading-[1.3] ${isLight ? "text-[#1A1A1A]/55" : "text-white/55"}`}>
                     {quote.title}
                   </div>
                 )}
@@ -201,7 +210,7 @@ function HorizontalAccordion({ quotes, activeIndex, onActivate }) {
 // ── Vertical accordion (mobile) ───────────────────────────────────────────
 // Same idea but stacked: active row is tall and shows the full quote,
 // collapsed rows shrink to a compact strip with avatar + name.
-function VerticalAccordion({ quotes, activeIndex, onActivate }) {
+function VerticalAccordion({ quotes, activeIndex, onActivate, isLight = false }) {
   return (
     <div
       className="flex flex-col gap-3 md:hidden"
@@ -222,21 +231,25 @@ function VerticalAccordion({ quotes, activeIndex, onActivate }) {
             className={clsx(
               "group relative cursor-pointer overflow-hidden rounded-[20px] border transition-[height,border-color,background-color] ease-[cubic-bezier(0.22,0.61,0.36,1)] duration-500",
               isActive
-                ? "h-[280px] border-white/20 bg-white/[0.04]"
-                : "h-[76px] border-white/10 bg-white/[0.02]",
+                ? isLight
+                  ? "h-[280px] border-[#1A1A1A]/15 bg-[#1A1A1A]/[0.04]"
+                  : "h-[280px] border-white/20 bg-white/[0.04]"
+                : isLight
+                  ? "h-[76px] border-[#1A1A1A]/10 bg-[#1A1A1A]/[0.02]"
+                  : "h-[76px] border-white/10 bg-white/[0.02]",
             )}
           >
             <div className="flex h-full flex-col p-5">
               <div className="flex items-center gap-3">
-                <Avatar quote={quote} size={36} />
+                <Avatar quote={quote} size={36} isLight={isLight} />
                 <div className="min-w-0">
                   {quote.name && (
-                    <div className="truncate text-[13px] text-white">
+                    <div className={`truncate text-[13px] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
                       {quote.name}
                     </div>
                   )}
                   {quote.title && (
-                    <div className="mono truncate text-[11px] text-white/55">
+                    <div className={`mono truncate text-[11px] ${isLight ? "text-[#1A1A1A]/55" : "text-white/55"}`}>
                       {quote.title}
                     </div>
                   )}
@@ -254,11 +267,11 @@ function VerticalAccordion({ quotes, activeIndex, onActivate }) {
                   }`,
                 }}
               >
-                <blockquote className="text-[1rem] leading-[1.55] text-white">
+                <blockquote className={`text-[1rem] leading-[1.55] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
                   “{quote.body}”
                 </blockquote>
                 {attribution && (
-                  <div className="mono mt-4 text-[12px] leading-[1.4] text-white/55">
+                  <div className={`mono mt-4 text-[12px] leading-[1.4] ${isLight ? "text-[#1A1A1A]/55" : "text-white/55"}`}>
                     {attribution}
                   </div>
                 )}
@@ -271,8 +284,9 @@ function VerticalAccordion({ quotes, activeIndex, onActivate }) {
   );
 }
 
-export function Testimonials({ eyebrow, heading, subheading, quotes = [] }) {
+export function Testimonials({ eyebrow, heading, subheading, quotes = [], theme = "dark" }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const isLight = theme === "light";
 
   return (
     <section className="gradient-divider py-20 md:py-24">
@@ -280,17 +294,17 @@ export function Testimonials({ eyebrow, heading, subheading, quotes = [] }) {
         {/* Header */}
         <div className="mb-12 max-w-2xl">
           {eyebrow && (
-            <span className="mono mb-4 block text-xs uppercase tracking-[0.08em] text-white/40">
+            <span className={`mono mb-4 block text-xs uppercase tracking-[0.08em] ${isLight ? "text-[#1A1A1A]/45" : "text-white/40"}`}>
               {eyebrow}
             </span>
           )}
           {heading && (
-            <h3 className="mb-4 text-[1.75rem] font-normal leading-[1.05] tracking-[-0.025em] text-white [text-wrap:balance] md:text-[2.375rem] md:tracking-[-0.03em]">
+            <h3 className={`mb-4 text-[1.75rem] font-normal leading-[1.05] tracking-[-0.025em] [text-wrap:balance] md:text-[2.375rem] md:tracking-[-0.03em] ${isLight ? "text-[#1A1A1A]" : "text-white"}`}>
               {heading}
             </h3>
           )}
           {subheading && (
-            <p className="text-[1rem] leading-[1.6] text-white/55">
+            <p className={`text-[1rem] leading-[1.6] ${isLight ? "text-[#1A1A1A]/60" : "text-white/55"}`}>
               {subheading}
             </p>
           )}
@@ -300,11 +314,13 @@ export function Testimonials({ eyebrow, heading, subheading, quotes = [] }) {
           quotes={quotes}
           activeIndex={activeIndex}
           onActivate={setActiveIndex}
+          isLight={isLight}
         />
         <VerticalAccordion
           quotes={quotes}
           activeIndex={activeIndex}
           onActivate={setActiveIndex}
+          isLight={isLight}
         />
       </div>
     </section>

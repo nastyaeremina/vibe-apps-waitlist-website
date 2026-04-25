@@ -18,9 +18,48 @@ export function ComparisonSpec({
   leftLabel,
   rightLabel,
   rows = [],
+  theme = "dark",
 }) {
   const ref = useRef(null);
   const [animate, setAnimate] = useState(false);
+  const isLight = theme === "light";
+
+  // Token map — keeps the JSX readable while letting the section
+  // flip cleanly between dark and light surfaces. White-on-translucent
+  // becomes #1A1A1A-on-translucent; the cards lean slightly heavier on
+  // contrast than their dark counterparts so they don't disappear into
+  // the cream background.
+  const t = isLight
+    ? {
+        heading: "text-[#1A1A1A]",
+        headingMuted: "text-[#1A1A1A]/55",
+        cardBorder: "border-[#1A1A1A]/10",
+        cardBg: "bg-[#1A1A1A]/[0.03]",
+        rowDivide: "divide-[#1A1A1A]/8",
+        rowHover: "hover:bg-[#1A1A1A]/[0.04]",
+        rowLabel: "text-[#1A1A1A]/55",
+        bodyMuted: "text-[#1A1A1A]/55",
+        bodyMore: "text-[#1A1A1A]/45",
+        mobileBorder: "border-[#1A1A1A]/10",
+        mobileBg: "bg-[#1A1A1A]/[0.03]",
+        mobileCheckBg: "bg-[#1A1A1A]/10 text-[#1A1A1A]",
+        mobileCheckText: "text-[#1A1A1A]",
+      }
+    : {
+        heading: "text-white",
+        headingMuted: "text-white/50",
+        cardBorder: "border-white/10",
+        cardBg: "bg-white/[0.02]",
+        rowDivide: "divide-white/5",
+        rowHover: "hover:bg-white/[0.03]",
+        rowLabel: "text-white/45",
+        bodyMuted: "text-white/50",
+        bodyMore: "text-white/40",
+        mobileBorder: "border-white/10",
+        mobileBg: "bg-white/[0.02]",
+        mobileCheckBg: "bg-white/10 text-white",
+        mobileCheckText: "text-white",
+      };
 
   // Section-local intersection observer so pill animations start only
   // when the spec card is actually in view. Reduced-motion users skip
@@ -76,12 +115,12 @@ export function ComparisonSpec({
             ("bold statement → quiet restatement"). */}
         <div className="mb-7 text-center">
           {heading && (
-            <h3 className="text-[1.75rem] font-normal leading-[1.1] tracking-[-0.025em] text-white [text-wrap:balance] md:text-[2.375rem] md:tracking-[-0.03em]">
+            <h3 className={`text-[1.75rem] font-normal leading-[1.1] tracking-[-0.025em] [text-wrap:balance] md:text-[2.375rem] md:tracking-[-0.03em] ${t.heading}`}>
               {heading}
               {headingCallout && (
                 <>
                   <br />
-                  <span className="text-white/50">{headingCallout}</span>
+                  <span className={t.headingMuted}>{headingCallout}</span>
                 </>
               )}
             </h3>
@@ -92,22 +131,23 @@ export function ComparisonSpec({
         <div
           ref={ref}
           data-spec-animate={animate ? "true" : "false"}
-          className="hidden rounded-2xl border border-white/10 bg-white/[0.02] pt-4 md:block md:pt-6"
+          data-spec-theme={theme}
+          className={`hidden rounded-2xl border ${t.cardBorder} ${t.cardBg} pt-4 md:block md:pt-6`}
         >
           {/* Header strip — logo + brand label per column. The logo
               slot is a fixed 32px square so the column headers line
               up even if the competitor logo is a neutral placeholder
               (we don't display third-party brand marks). */}
-          <div className="grid grid-cols-[minmax(180px,220px)_1fr_1fr] gap-x-6 border-b border-white/10 pb-3 px-6 md:px-8">
+          <div className={`grid grid-cols-[minmax(180px,220px)_1fr_1fr] gap-x-6 border-b ${t.cardBorder} pb-3 px-6 md:px-8`}>
             <div />
-            <BrandSlot variant="competitor" label={leftLabel} />
-            <BrandSlot variant="assembly" label={rightLabel} />
+            <BrandSlot variant="competitor" label={leftLabel} isLight={isLight} />
+            <BrandSlot variant="assembly" label={rightLabel} isLight={isLight} />
           </div>
 
           {/* Body rows. divide-y gives just-enough separation without
               the cell-border look of a spreadsheet. Lines bleed full-
               width; px is re-applied per row so content stays inset. */}
-          <div className="divide-y divide-white/5">
+          <div className={`divide-y ${t.rowDivide}`}>
             {rows.map(([label, left, right], i) => {
               // Each row cascades left→right: axis label + competitor appear
               // together, then Assembly follows 60ms later. Rows are
@@ -117,14 +157,14 @@ export function ComparisonSpec({
               return (
                 <div
                   key={i}
-                  className="grid grid-cols-[minmax(180px,220px)_1fr_1fr] gap-x-6 py-4 px-6 md:px-8 transition-colors duration-150 hover:bg-white/[0.03]"
+                  className={`grid grid-cols-[minmax(180px,220px)_1fr_1fr] gap-x-6 py-4 px-6 md:px-8 transition-colors duration-150 ${t.rowHover}`}
                   style={{
                     paddingTop: i === 0 ? 12 : undefined,
                     paddingBottom: undefined,
                   }}
                 >
                   <div
-                    className="spec-row text-[14px] leading-[1.5] text-white/45"
+                    className={`spec-row text-[14px] leading-[1.5] ${t.rowLabel}`}
                     style={{ animationDelay: `${base}ms` }}
                   >
                     {label}
@@ -139,8 +179,9 @@ export function ComparisonSpec({
                       litCount={COMPETITOR_LIT_COUNT}
                       baseDelayMs={base}
                       pillStepMs={PILL_STAGGER_MS}
+                      isLight={isLight}
                     />
-                    <p className="text-[14px] leading-[1.5] text-white/40">
+                    <p className={`text-[14px] leading-[1.5] ${t.bodyMore}`}>
                       {left}
                     </p>
                   </div>
@@ -154,8 +195,9 @@ export function ComparisonSpec({
                       litCount={PILL_COUNT}
                       baseDelayMs={base + 60}
                       pillStepMs={PILL_STAGGER_MS}
+                      isLight={isLight}
                     />
-                    <p className="text-[14px] leading-[1.5] text-white/50">
+                    <p className={`text-[14px] leading-[1.5] ${t.bodyMuted}`}>
                       {right}
                     </p>
                   </div>
@@ -170,11 +212,11 @@ export function ComparisonSpec({
           {rows.map(([, , right, mobileFeature], i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4"
+              className={`flex items-start gap-3 rounded-2xl border ${t.mobileBorder} ${t.mobileBg} px-4 py-4`}
             >
               <span
                 aria-hidden="true"
-                className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-white/10 text-white"
+                className={`mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full ${t.mobileCheckBg}`}
               >
                 <svg
                   width="11"
@@ -189,7 +231,7 @@ export function ComparisonSpec({
                   <path d="M2.5 6.5l2.5 2.5 4.5-5.5" />
                 </svg>
               </span>
-              <span className="text-[14px] leading-[1.5] text-white">
+              <span className={`text-[14px] leading-[1.5] ${t.mobileCheckText}`}>
                 {mobileFeature || right}
               </span>
             </div>
@@ -205,23 +247,32 @@ export function ComparisonSpec({
 // favicon). For the competitor we render a neutral, unbranded
 // placeholder — we deliberately don't display third-party logos in a
 // comparative context.
-function BrandSlot({ variant, label }) {
+function BrandSlot({ variant, label, isLight }) {
   const isAssembly = variant === "assembly";
+  // The Assembly mark is always its dark brand surface (#101010 with
+  // white logo) — that mark IS the brand and reads great on both
+  // backgrounds. Only the competitor placeholder + label color flip.
+  const competitorBg = isLight
+    ? "bg-[#1A1A1A]/[0.04] ring-[#1A1A1A]/10"
+    : "bg-white/[0.04] ring-white/10";
+  const assemblyRing = isLight ? "ring-[#1A1A1A]/10" : "ring-white/10";
+  const assemblyLabel = isLight ? "text-[#1A1A1A]/90" : "text-white/85";
+  const competitorLabel = isLight ? "text-[#1A1A1A]/55" : "text-white/55";
   return (
     <div className="flex items-center gap-3">
       <span
         aria-hidden="true"
         className={
           isAssembly
-            ? "flex h-8 w-8 flex-none items-center justify-center rounded-md bg-[#101010] ring-1 ring-white/10"
-            : "flex h-8 w-8 flex-none rounded-md bg-white/[0.04] ring-1 ring-white/10"
+            ? `flex h-8 w-8 flex-none items-center justify-center rounded-md bg-[#101010] ring-1 ${assemblyRing}`
+            : `flex h-8 w-8 flex-none rounded-md ring-1 ${competitorBg}`
         }
       >
         {isAssembly && <AssemblyMark />}
       </span>
       <span
         className={`text-[14px] leading-[1.5] ${
-          isAssembly ? "text-white/85" : "text-white/55"
+          isAssembly ? assemblyLabel : competitorLabel
         }`}
       >
         {label}
@@ -264,11 +315,15 @@ function PillStrip({
   litCount,
   baseDelayMs = 0,
   pillStepMs = 0,
+  isLight = false,
 }) {
   const isAssembly = variant === "assembly";
   const litClass = isAssembly
     ? "spec-pill--assembly-lit"
     : "spec-pill--competitor-lit";
+  // Resting (unlit) base — translucent dark on the cream chapter,
+  // translucent white on the dark sections.
+  const restingBg = isLight ? "bg-[#1A1A1A]/10" : "bg-white/10";
   return (
     <div aria-hidden="true" className="flex items-center gap-[4px]">
       {Array.from({ length: count }).map((_, i) => {
@@ -276,7 +331,7 @@ function PillStrip({
         return (
           <span
             key={i}
-            className={`block h-4 w-[6px] bg-white/10 ${
+            className={`block h-4 w-[6px] ${restingBg} ${
               isLit ? litClass : ""
             }`}
             style={

@@ -75,25 +75,35 @@ export default function Home() {
         <ValueProps items={c.valueProps} />
       </Reveal>
 
-      <Reveal>
-        <ComparisonSpec
-          heading={c.comparison.heading}
-          headingCallout={c.comparison.headingCallout}
-          leftLabel={c.comparison.leftLabel}
-          rightLabel={c.comparison.rightLabel}
-          rows={c.comparison.rows}
-        />
-      </Reveal>
+      {/* Off-white chapter — ComparisonSpec + Testimonials read as a
+          single light-mode interlude between the dark ValueProps and
+          dark FAQ. Hard color edges (no gradient transition): the
+          background flips on mount of this wrapper and back when the
+          wrapper ends. data-nav-theme="light" lets the fixed nav
+          re-color itself for legibility on the cream surface. */}
+      <div data-nav-theme="light" className="bg-[#F5F5F0]">
+        <Reveal>
+          <ComparisonSpec
+            theme="light"
+            heading={c.comparison.heading}
+            headingCallout={c.comparison.headingCallout}
+            leftLabel={c.comparison.leftLabel}
+            rightLabel={c.comparison.rightLabel}
+            rows={c.comparison.rows}
+          />
+        </Reveal>
 
-      <Reveal>
-        <Testimonials
-          heading={c.testimonials.heading}
-          subheading={c.testimonials.subheading}
-          stat={c.testimonials.stat}
-          statCaption={c.testimonials.statCaption}
-          quotes={c.testimonials.quotes}
-        />
-      </Reveal>
+        <Reveal>
+          <Testimonials
+            theme="light"
+            heading={c.testimonials.heading}
+            subheading={c.testimonials.subheading}
+            stat={c.testimonials.stat}
+            statCaption={c.testimonials.statCaption}
+            quotes={c.testimonials.quotes}
+          />
+        </Reveal>
+      </div>
 
       <Reveal>
         <FAQ
