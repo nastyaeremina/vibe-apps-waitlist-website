@@ -1,29 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { SITE } from "../config/site";
 
-// localStorage key for persisted follow-up progress (completion marks +
-// in-flight text inputs). Versioned so we can change shape later without
-// ghost data surviving.
-const STORAGE_KEY = "assembly-waitlist-progress-v1";
+// localStorage key for persisted follow-up progress. Bumped to v2 when
+// the follow-ups changed from internal forms (build/share/survey) to
+// external link-outs (survey/community), so older state doesn't restore
+// completion of ids that no longer exist.
+const STORAGE_KEY = "assembly-waitlist-progress-v2";
 
 // Post-submit confirmation. Two phases:
 //   1. Success flash (~1.2s): a big centered check with a soft ripple, "You're
 //      signed up". Gives the email submit a moment of delight.
-//   2. Main view: a compact confirmation header, a progress meter ("N of 4
-//      complete") and three collapsed follow-up rows. Each row expands on
-//      click to reveal its input UI — reads like leveling up through the
-//      follow-ups.
-//
-// The email itself auto-counts as the first completed step. Build / share /
-// survey are local-only state. Nothing persists across closes — `open` toggling
-// resets everything.
+//   2. Main view: a compact confirmation header, a progress meter and a list
+//      of follow-up rows. Each row is a one-click external link — opening
+//      the link marks the row complete. The email itself auto-counts as
+//      the first completed step.
 
-// Brand check — inlined from public/Icons/checkmark.svg. Filled path
-// (not a thin stroke), so it reads bold at small sizes and respects
-// the color of its parent via currentColor.
+// Brand check — inlined from public/Icons/checkmark.svg.
 function CheckIcon({ className }) {
   return (
     <svg
@@ -37,187 +31,47 @@ function CheckIcon({ className }) {
   );
 }
 
-function ChevronIcon({ className, open }) {
+function ArrowOutIcon({ className }) {
   return (
     <svg
       viewBox="0 0 16 16"
-      className={`${className} transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path
-        d="M4 6l4 4 4-4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M6 3h7v7" />
+      <path d="M13 3L6 10" />
+      <path d="M11 10v3H3V5h3" />
     </svg>
   );
 }
 
-// Soft filled chip — charcoal fill, no border, medium rounding. Shared
-// across follow-ups so action weight stays consistent.
-function ItemAction({ onClick, disabled, type = "button", icon, children }) {
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/[0.06] px-3 py-1.5 text-[13px] font-medium text-white/80 transition-colors hover:bg-white/[0.1] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {icon && (
-        <span className="text-white/60" aria-hidden="true">
-          {icon}
-        </span>
-      )}
-      {children}
-    </button>
-  );
-}
-
-function LinkedInIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm7 0h3.8v1.7h.05a4.17 4.17 0 0 1 3.75-2.07c4 0 4.75 2.63 4.75 6.05V21H18V15.3c0-1.36-.03-3.11-1.9-3.11-1.9 0-2.2 1.48-2.2 3.01V21H10V9z" />
-    </svg>
-  );
-}
-
-function XIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
-    </svg>
-  );
-}
-
-// Dark-theme custom dropdown. Native <select> can't be styled consistently —
-// its popup inherits OS/browser chrome, which reads as a light-mode popover
-// on top of our dark card. This replaces it with an aria-listbox: trigger
-// button + absolute-positioned panel that sits inside the modal's scroll
-// container so it moves with the content.
-function SurveySelect({ value, placeholder, options, onChange, ariaLabel }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-label={ariaLabel}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] outline-none transition-colors ${
-          open
-            ? "bg-white/[0.08]"
-            : "bg-white/[0.04] hover:bg-white/[0.06]"
-        } ${value ? "text-white" : "text-white/40"}`}
-      >
-        <span className="truncate">{value || placeholder}</span>
-        <ChevronIcon
-          className="h-3.5 w-3.5 flex-none text-white/45"
-          open={open}
-        />
-      </button>
-      {open && (
-        <div
-          role="listbox"
-          data-lenis-prevent
-          className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-[240px] overflow-y-auto overscroll-contain rounded-lg bg-[#1C1C1C] py-1 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.04)] animate-fade-in"
-        >
-          {options.map((opt) => {
-            const selected = opt === value;
-            return (
-              <button
-                key={opt}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => {
-                  onChange(opt);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.06] ${
-                  selected ? "text-white" : "text-white/75"
-                }`}
-              >
-                <span>{opt}</span>
-                {selected && (
-                  <CheckIcon className="h-3.5 w-3.5 flex-none text-white" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Clickable step row with expand/collapse header and a content panel.
-// Every row carries a leading status dot so alignment stays consistent:
-// filled + check when done, empty outline while pending.
+// Step row — leading status dot, title + effort/subtitle, reward chip on the
+// right (or a subtle "open external link" arrow). The whole row is one click
+// target: clicking fires `onAction` and the row goes to a completed state.
 //
-// Layout borrows the "label / value" pattern from the membership-card
-// reference — left column holds the action (title + effort hint), right
-// column holds the reward as brand-lime accent text, mirroring the
-// "Cost: Priceless" treatment. No dot, no pill, no "Unlocks" verb: the
-// color alone signals "this is the prize." On completion the whole row
-// dims and the subtitle flips to the celebratory `completedLabel`
-// ("Earlier access — locked in").
-function StepRow({ id, title, effort, reward, premium, subtitle, done, open, onToggle, children }) {
-  const headerClickable = !done && Boolean(onToggle);
+// On completion the row dims, the subtitle flips to the celebratory
+// `completedLabel`, and the right-side reward chip is hidden — the prize
+// is already in the subtitle ("Even earlier access unlocked").
+function StepRow({ id, title, effort, reward, subtitle, done, clickable, onAction }) {
+  const isClickable = !done && Boolean(onAction);
 
   return (
     <div
       data-step-id={id}
-      className={`rounded-xl bg-white/[0.02] px-3.5 pt-3.5 pb-3.5 transition-[background-color,padding-bottom] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0.24,1)] ${
-        open && !done ? "!pb-5" : ""
-      } ${headerClickable ? "hover:bg-white/[0.05]" : ""} ${
-        done ? "opacity-85" : ""
-      }`}
+      className={`rounded-xl bg-white/[0.02] px-3.5 py-3.5 transition-colors ${
+        isClickable ? "hover:bg-white/[0.05]" : ""
+      } ${done ? "opacity-85" : ""}`}
     >
       <button
         type="button"
-        onClick={() => headerClickable && onToggle()}
-        aria-expanded={open}
-        disabled={!headerClickable}
-        className="flex w-full items-center justify-between gap-3 text-left transition-opacity disabled:cursor-default disabled:opacity-100"
+        onClick={() => isClickable && onAction()}
+        disabled={!isClickable}
+        className="flex w-full items-center justify-between gap-3 text-left disabled:cursor-default"
       >
         <div className="flex min-w-0 items-start gap-3">
           {/* Leading status dot — always rendered so every row's title
@@ -241,9 +95,6 @@ function StepRow({ id, title, effort, reward, premium, subtitle, done, open, onT
               {title}
             </div>
             {done ? (
-              /* Completed: celebratory copy absorbs the full subtitle
-                 line. No right-column reward — the prize is already in
-                 the subtitle text ("Earlier access — locked in"). */
               <p className="mt-1 text-[13px] leading-[1.5] text-white/55">
                 {subtitle}
               </p>
@@ -258,61 +109,32 @@ function StepRow({ id, title, effort, reward, premium, subtitle, done, open, onT
         </div>
         <div className="flex flex-none items-center gap-2.5">
           {reward && !done && (
-            premium ? (
-              /* Premium tier — same soft gray base as sibling pills,
-                 but a neutral white highlight sweeps diagonally across
-                 on a slow loop. Distinguished through motion only, so
-                 the row of three stays quiet. */
-              <span className="reward-shimmer inline-flex items-center rounded-full bg-white/[0.08] px-3 py-[5px] text-[12px] font-medium tracking-[-0.005em] text-white/85">
-                <span className="relative z-10">{reward}</span>
-              </span>
-            ) : (
-              /* Standard soft-gray pill — fits within the row's
-                 light-fill language instead of punching out as black. */
-              <span className="inline-flex items-center rounded-full bg-white/[0.08] px-3 py-[5px] text-[12px] font-medium tracking-[-0.005em] text-white/85">
-                {reward}
-              </span>
-            )
+            <span className="inline-flex items-center rounded-full bg-white/[0.08] px-3 py-[5px] text-[12px] font-medium tracking-[-0.005em] text-white/85">
+              {reward}
+            </span>
+          )}
+          {clickable && !done && (
+            <ArrowOutIcon className="h-3.5 w-3.5 text-white/45" />
           )}
         </div>
       </button>
-
-      {/* Always-mounted collapsible body. We animate grid-template-rows
-          between 0fr ↔ 1fr (so height transitions naturally) plus opacity
-          and margin in lockstep. Closing now eases out instead of cutting
-          to nothing. The inner element is `min-h-0 overflow-hidden` so
-          the row clamp during the transition. */}
-      {!done && (
-        <div
-          className={`grid transition-[grid-template-rows,opacity,margin-top] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0.24,1)] ${
-            open
-              ? "mt-5 grid-rows-[1fr] opacity-100"
-              : "mt-0 grid-rows-[0fr] opacity-0"
-          }`}
-          aria-hidden={!open}
-        >
-          <div className="ml-8 min-h-0 overflow-hidden">{children}</div>
-        </div>
-      )}
     </div>
   );
 }
 
-export function WaitlistModal({ open, onClose, content }) {
+export function WaitlistModal({ open, onClose, content, email }) {
   const [phase, setPhase] = useState("success");
   const [completed, setCompleted] = useState(() => new Set(["email"]));
-  const [openStep, setOpenStep] = useState(null);
-  const [buildInput, setBuildInput] = useState("");
-  const [surveyAnswers, setSurveyAnswers] = useState({});
   const [hydrated, setHydrated] = useState(false);
   // Returning = we found prior progress on this device. Drives a different
   // success-flash copy ("Lucky you — loading your info…") so repeat visits
   // feel recognized instead of restarting the same "You're signed up" beat.
   const [isReturning, setIsReturning] = useState(false);
 
+  const followUpIds = content.items.map((item) => item.id);
+
   // Hydrate saved progress from localStorage on first mount so returning users
-  // pick up where they left off. Only the first-time flash is replaced: if
-  // there's already prior progress, we skip straight to the main view.
+  // pick up where they left off.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -320,23 +142,12 @@ export function WaitlistModal({ open, onClose, content }) {
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved && typeof saved === "object") {
-          // Any meaningful prior content = returning user.
-          const hasPriorProgress =
-            (Array.isArray(saved.completed) && saved.completed.length > 0) ||
-            (typeof saved.buildInput === "string" &&
-              saved.buildInput.trim().length > 0) ||
-            (saved.surveyAnswers &&
-              typeof saved.surveyAnswers === "object" &&
-              Object.keys(saved.surveyAnswers).length > 0);
-          if (hasPriorProgress) setIsReturning(true);
-
-          if (Array.isArray(saved.completed)) {
-            setCompleted(new Set(["email", ...saved.completed]));
-          }
-          if (typeof saved.buildInput === "string")
-            setBuildInput(saved.buildInput);
-          if (saved.surveyAnswers && typeof saved.surveyAnswers === "object") {
-            setSurveyAnswers(saved.surveyAnswers);
+          if (Array.isArray(saved.completed) && saved.completed.length > 0) {
+            setIsReturning(true);
+            const valid = saved.completed.filter((id) =>
+              followUpIds.includes(id),
+            );
+            setCompleted(new Set(["email", ...valid]));
           }
         }
       }
@@ -344,32 +155,28 @@ export function WaitlistModal({ open, onClose, content }) {
       /* ignore corrupt storage */
     }
     setHydrated(true);
+    // followUpIds is derived from props — re-running on prop change is fine
+    // and only filters, never widens, the restored set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist progress on any change (once hydrated). We keep completion marks
-  // plus the input values themselves, so an in-flight build / survey answers
-  // are restored too.
+  // Persist progress on any change (once hydrated).
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
     try {
       const payload = {
         completed: [...completed].filter((id) => id !== "email"),
-        buildInput,
-        surveyAnswers,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       /* storage full or blocked */
     }
-  }, [hydrated, completed, buildInput, surveyAnswers]);
+  }, [hydrated, completed]);
 
   // On open: play the success flash once, then settle into the main view.
-  // On close: leave completion/input state intact so it persists across
-  // reopens; only the transient ui bits (phase + openStep) reset.
   useEffect(() => {
     if (!open) {
       setPhase("success");
-      setOpenStep(null);
       return;
     }
     const t = setTimeout(() => setPhase("main"), 1200);
@@ -391,26 +198,6 @@ export function WaitlistModal({ open, onClose, content }) {
     };
   }, [open, onClose]);
 
-  // Close the currently-open step when the user clicks anywhere outside
-  // of it (another row, the progress meter, the footer buttons, etc.).
-  // Escape-to-close is handled by the modal's Escape listener above;
-  // backdrop clicks close the whole modal, so this only needs to care
-  // about clicks landing inside the modal card.
-  useEffect(() => {
-    if (!open || !openStep) return;
-    const handlePointerDown = (e) => {
-      const activeRow = document.querySelector(
-        `[data-step-id="${openStep}"]`,
-      );
-      if (activeRow && !activeRow.contains(e.target)) {
-        setOpenStep(null);
-      }
-    };
-    document.addEventListener("mousedown", handlePointerDown);
-    return () =>
-      document.removeEventListener("mousedown", handlePointerDown);
-  }, [open, openStep]);
-
   // Portal target. Modal must escape hero ancestor transforms/opacity.
   const [portalTarget, setPortalTarget] = useState(null);
   useEffect(() => {
@@ -427,57 +214,23 @@ export function WaitlistModal({ open, onClose, content }) {
       return next;
     });
 
-  const [buildItem, shareItem, surveyItem] = content.items;
-
-  const toggleStep = (id) => setOpenStep((cur) => (cur === id ? null : id));
-
-  const handleBuildSubmit = (e) => {
-    e.preventDefault();
-    if (!buildInput.trim()) return;
-    mark("build");
-    setOpenStep(null);
+  const handleItemAction = (item) => {
+    let url = item.url;
+    if (item.prefillEmail && email) {
+      // Typeform hidden-field convention — email is appended after the
+      // URL fragment as `#email=…`.
+      url = `${url}#email=${encodeURIComponent(email)}`;
+    }
+    if (typeof window !== "undefined" && url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    mark(item.id);
   };
 
-  const getShareUrl = () =>
-    typeof window !== "undefined"
-      ? `${window.location.origin}/`
-      : `https://${SITE.domain}/`;
-
-  const handleShareLinkedIn = () => {
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getShareUrl())}`;
-    window.open(linkedInUrl, "_blank", "noopener,noreferrer");
-    mark("share");
-    setOpenStep(null);
-  };
-
-  const handleShareX = () => {
-    const shareUrl = getShareUrl();
-    const text = "Just joined the Assembly Studio waitlist.";
-    const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
-    window.open(xUrl, "_blank", "noopener,noreferrer");
-    mark("share");
-    setOpenStep(null);
-  };
-
-  const surveyQuestions = surveyItem.questions ?? [];
-  const allAnswered = surveyQuestions.every((q) =>
-    Boolean(surveyAnswers[q.id]),
-  );
-
-  const handleSurveySubmit = (e) => {
-    e.preventDefault();
-    if (!allAnswered) return;
-    mark("survey");
-    setOpenStep(null);
-  };
-
-  // Progress spans all 4 steps — email + 3 follow-ups. Email is auto-complete
-  // when the modal opens (they just submitted it), so the bar always starts
-  // at 1/4 rather than 0/4. All-complete unlocks the "Submit" terminal state.
-  const perkIds = ["build", "share", "survey"];
-  const perkDone = perkIds.filter((id) => completed.has(id)).length;
-  const totalSteps = 1 + perkIds.length; // email + follow-ups
-  const stepsDone = 1 + perkDone; // email always counts
+  // Progress spans email + all follow-ups. Email is auto-complete.
+  const perkDone = followUpIds.filter((id) => completed.has(id)).length;
+  const totalSteps = 1 + followUpIds.length;
+  const stepsDone = 1 + perkDone;
   const progressPct = Math.round((stepsDone / totalSteps) * 100);
   const allComplete = stepsDone === totalSteps;
 
@@ -505,13 +258,8 @@ export function WaitlistModal({ open, onClose, content }) {
             data-lenis-prevent
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 pb-7 pt-8 md:px-8 md:pb-8 md:pt-9"
           >
-            {/* Confirmation — baseline "you're on the list" acknowledgement.
-                Uses the site's display type scale (smaller than a page H1
-                but the same leading/tracking ratios). */}
+            {/* Confirmation — baseline "you're on the list" acknowledgement. */}
             <div className="mb-7 animate-fade-in">
-              {/* Ambient-glow wrapper — soft radial bloom behind the check
-                  gives the icon some dimension so it doesn't read as a flat
-                  button pasted on a flat surface. */}
               <span
                 aria-hidden="true"
                 className="relative mb-4 inline-flex h-7 w-7 items-center justify-center"
@@ -532,10 +280,7 @@ export function WaitlistModal({ open, onClose, content }) {
               </p>
             </div>
 
-            {/* Progress meter — prismatic gradient fill (Dynamic-Island
-                reference). The fill shimmers continuously so the bar feels
-                alive, and brightness-pulses on every new completion via a
-                key= prop that remounts the element. */}
+            {/* Progress meter. */}
             <div className="mb-5 flex items-center gap-4">
               <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
                 <div
@@ -550,167 +295,32 @@ export function WaitlistModal({ open, onClose, content }) {
               </div>
             </div>
 
-            {/* Expandable step rows — email first (pre-complete), then the
-                three follow-ups with reward chips. Small gap between rows
-                so each reads as its own floating card. */}
+            {/* Email-submitted (auto-complete) + follow-up rows. */}
             <div className="-mx-3.5 flex flex-col gap-1.5">
-              {/* Email — auto-complete, no expand. */}
               <StepRow
                 title={content.emailStep.title}
                 subtitle={content.emailStep.subtitle}
                 done
               />
 
-              {/* What would you build? */}
-              <StepRow
-                id="build"
-                title={buildItem.title}
-                subtitle={
-                  completed.has("build")
-                    ? buildItem.completedLabel
-                    : buildItem.subtitle
-                }
-                effort={buildItem.effort}
-                reward={buildItem.reward}
-                done={completed.has("build")}
-                open={openStep === "build"}
-                onToggle={() => toggleStep("build")}
-              >
-                <form
-                  onSubmit={handleBuildSubmit}
-                  className="flex flex-col gap-2.5"
-                >
-                  <textarea
-                    value={buildInput}
-                    onChange={(e) => setBuildInput(e.target.value)}
-                    rows={2}
-                    placeholder={buildItem.placeholder}
-                    aria-label={buildItem.title}
-                    autoFocus
-                    className="w-full resize-none rounded-lg bg-white/[0.04] px-3 py-2 text-[13px] leading-[1.5] text-white placeholder:text-white/30 outline-none transition-colors focus:bg-white/[0.07]"
-                  />
-                  <div>
-                    <ItemAction
-                      type="submit"
-                      disabled={!buildInput.trim()}
-                    >
-                      {buildItem.actionLabel}
-                    </ItemAction>
-                  </div>
-                </form>
-              </StepRow>
-
-              {/* Share */}
-              <StepRow
-                id="share"
-                title={shareItem.title}
-                subtitle={
-                  completed.has("share")
-                    ? shareItem.completedLabel
-                    : shareItem.subtitle
-                }
-                effort={shareItem.effort}
-                reward={shareItem.reward}
-                done={completed.has("share")}
-                open={openStep === "share"}
-                onToggle={() => toggleStep("share")}
-              >
-                <div className="flex flex-wrap gap-2">
-                  <ItemAction
-                    onClick={handleShareLinkedIn}
-                    icon={<LinkedInIcon />}
-                  >
-                    {shareItem.actionLabel}
-                  </ItemAction>
-                  <ItemAction onClick={handleShareX} icon={<XIcon />}>
-                    {shareItem.actionLabelX ?? "Share on X"}
-                  </ItemAction>
-                </div>
-              </StepRow>
-
-              {/* Survey */}
-              <StepRow
-                id="survey"
-                title={surveyItem.title}
-                subtitle={
-                  completed.has("survey")
-                    ? surveyItem.completedLabel
-                    : surveyItem.subtitle
-                }
-                effort={surveyItem.effort}
-                reward={surveyItem.reward}
-                premium={surveyItem.premium}
-                done={completed.has("survey")}
-                open={openStep === "survey"}
-                onToggle={() => toggleStep("survey")}
-              >
-                <form onSubmit={handleSurveySubmit}>
-                  <div className="flex flex-col gap-5">
-                    {surveyQuestions.map((q) => (
-                      <div key={q.id}>
-                        <div className="text-[14px] font-medium tracking-[-0.005em] text-white">
-                          {q.label}
-                        </div>
-                        {q.type === "chips" ? (
-                          <div className="mt-2.5 flex flex-wrap gap-2">
-                            {q.options.map((opt) => {
-                              const selected = surveyAnswers[q.id] === opt;
-                              return (
-                                <button
-                                  key={opt}
-                                  type="button"
-                                  onClick={() =>
-                                    setSurveyAnswers((prev) => ({
-                                      ...prev,
-                                      [q.id]: opt,
-                                    }))
-                                  }
-                                  className={`rounded-full px-3.5 py-1.5 text-[13px] transition-colors ${
-                                    selected
-                                      ? "bg-white/[0.16] font-medium text-white"
-                                      : "bg-white/[0.05] text-white/75 hover:bg-white/[0.08] hover:text-white"
-                                  }`}
-                                >
-                                  {opt}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="mt-2.5">
-                            <SurveySelect
-                              value={surveyAnswers[q.id] ?? ""}
-                              placeholder={q.placeholder ?? "Select one…"}
-                              options={q.options}
-                              ariaLabel={q.label}
-                              onChange={(v) =>
-                                setSurveyAnswers((prev) => ({
-                                  ...prev,
-                                  [q.id]: v,
-                                }))
-                              }
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-6">
-                    <button
-                      type="submit"
-                      disabled={!allAnswered}
-                      className="inline-flex items-center justify-center rounded-lg bg-white/[0.08] px-4 py-2 text-[13px] font-medium text-white/90 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-not-allowed disabled:bg-white/[0.04] disabled:text-white/40"
-                    >
-                      {surveyItem.submitLabel ?? "Submit"}
-                    </button>
-                  </div>
-                </form>
-              </StepRow>
+              {content.items.map((item) => (
+                <StepRow
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  subtitle={
+                    completed.has(item.id) ? item.completedLabel : undefined
+                  }
+                  effort={item.effort}
+                  reward={item.reward}
+                  done={completed.has(item.id)}
+                  clickable
+                  onAction={() => handleItemAction(item)}
+                />
+              ))}
             </div>
 
-            {/* Primary close — "Submit" reads as finalizing the follow-ups,
-                "Maybe later" as deferring. Both simply close the modal; the
-                individual steps already auto-save when completed. */}
+            {/* Primary close. "Submit" finalizes; "Maybe later" defers. */}
             <div className="mt-7 flex flex-col items-center gap-3">
               <button
                 type="button"
@@ -736,10 +346,7 @@ export function WaitlistModal({ open, onClose, content }) {
   );
 }
 
-// Full-card success flash shown for ~1.2s right after the modal opens. Big
-// centered check with a soft expanding ring and a short line of copy. The
-// copy shifts on return visits so repeat sign-ups feel recognized rather
-// than restarted.
+// Full-card success flash shown for ~1.2s right after the modal opens.
 function SuccessFlash({ returning }) {
   return (
     <div className="flex min-h-[320px] flex-col items-center justify-center px-8 py-12 text-center">

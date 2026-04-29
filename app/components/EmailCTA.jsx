@@ -105,6 +105,7 @@ export function EmailCTA() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         content={HOME_CONTENT.waitlistModal}
+        email={email.trim()}
       />
     </>
   );

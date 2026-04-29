@@ -3,7 +3,7 @@
 
 export const HOME_CONTENT = {
   hero: {
-    heading: "Build client-facing apps on a foundation built for client work",
+    heading: "The AI app builder for client-facing experiences",
     subheading:
       "Build apps in minutes, or pick from a library of pre-built ones. Each one deploys to your client portal and inherits your contacts, permissions, and preferences.",
   },
@@ -52,47 +52,7 @@ export const HOME_CONTENT = {
         " client experience.",
       ],
       [
-        "Describe what you want — a ",
-        {
-          u: "client onboarding wizard",
-          preview: {
-            side: "right",
-            visual: "appMock",
-            visualProps: {
-              title: "Onboarding",
-              rows: ["Company details", "KYC documents"],
-            },
-            body: "A guided intake flow that routes to the right teammate.",
-          },
-        },
-        ", a ",
-        {
-          u: "approvals workflow",
-          preview: {
-            side: "right",
-            visual: "appMock",
-            visualProps: {
-              title: "Approvals",
-              rows: ["Draft submitted", "Awaiting sign-off"],
-            },
-            body: "Drafts, reviews, and client sign-off with a clear paper trail.",
-          },
-        },
-        ", a ",
-        {
-          u: "client community space",
-          preview: {
-            side: "left",
-            visual: "appMock",
-            visualProps: {
-              title: "Community",
-              rows: ["Announcements", "Threads"],
-              accent: "none",
-            },
-            body: "A shared space for announcements, threads, and directory.",
-          },
-        },
-        ". From there, Assembly Studio generates an app that works with your ",
+        "Describe what you want — a client onboarding wizard, a approvals workflow, a client community space. From there, Assembly Studio generates an app that works with your ",
         {
           u: "existing contacts and team",
           preview: {
@@ -354,120 +314,27 @@ export const HOME_CONTENT = {
       subtitle: "You're on the waitlist!",
     },
     allCompleteLabel: "All perks unlocked — you're on the next cohort.",
+    // Each follow-up is a single-click external action: opens a URL in
+    // a new tab and marks the row complete. `prefillEmail` appends the
+    // submitted email to the URL fragment as `#email=…` (Typeform's
+    // hidden-field convention).
     items: [
       {
-        id: "build",
-        title: "What would you build first?",
-        // Effort is the only subtitle line — reward lives in the right
-        // column as brand-lime accent text (see StepRow). Short-form
-        // reward reads like a price: just the prize, no verb.
-        effort: "1 sentence",
-        reward: "Earlier access",
-        placeholder:
-          "e.g. a client intake form that routes to the right partner",
-        actionLabel: "Save",
-        // Completion copy celebrates what they won — absorbs both
-        // columns since the right-side reward is hidden once done.
-        completedLabel: "Earlier access unlocked",
-      },
-      {
-        id: "share",
-        title: "Share with your network",
-        effort: "30s post",
-        reward: "Founding-member plan",
-        actionLabel: "Share on LinkedIn",
-        actionLabelX: "Share on X",
-        completedLabel: "Founding-member plan unlocked",
-      },
-      {
         id: "survey",
-        title: "Quick survey",
-        effort: "6 questions · ~2 min",
-        reward: "Founder onboarding",
-        // Top-tier reward — opt-in to the shimmer pill treatment so this
-        // prize reads as the most valuable of the three (see reward-
-        // shimmer styling in globals.css and StepRow's `premium` branch).
-        premium: true,
-        actionLabel: "Take survey",
-        completedLabel: "Founder onboarding unlocked",
-        submitLabel: "Submit",
-        questions: [
-          {
-            id: "work",
-            label: "What kind of work do you do?",
-            type: "select",
-            placeholder: "Select one…",
-            options: [
-              "Consulting",
-              "Legal",
-              "Accounting",
-              "Advisory",
-              "Agency",
-              "Coaching",
-              "Other",
-            ],
-          },
-          {
-            id: "team",
-            label: "How big is your team?",
-            type: "chips",
-            options: ["Just me", "2–10", "11–50", "51–100", "101+"],
-          },
-          {
-            id: "experience",
-            label: "What does your client experience look like today?",
-            type: "select",
-            placeholder: "Select one…",
-            options: [
-              "Email and shared docs",
-              "A patchwork of SaaS tools",
-              "A custom-built portal",
-              "Nothing structured yet",
-              "Other",
-            ],
-          },
-          {
-            id: "build",
-            label: "How would you want to build apps in Assembly?",
-            type: "select",
-            placeholder: "Select one…",
-            options: [
-              "Describe what I need and let AI build it",
-              "Start from a reviewed template",
-              "Build alongside the Assembly team",
-              "Hire Assembly to build it for me",
-              "Not sure yet",
-            ],
-          },
-          {
-            id: "stage",
-            label: "Where are you in your search?",
-            type: "select",
-            placeholder: "Select one…",
-            options: [
-              "Just browsing",
-              "Actively evaluating options",
-              "Ready to buy",
-              "Already using Assembly",
-            ],
-          },
-          {
-            id: "price",
-            label: "What would you expect to pay per month?",
-            type: "select",
-            placeholder: "Select one…",
-            // Compressed from 6 buckets to 4 — the mid-range splits
-            // (<$100/$100-$300 and $1k-$3k/$3k+) added length without
-            // changing what we learn: low / mid / high / unsure still
-            // answers the founder pricing question.
-            options: [
-              "Under $300",
-              "$300 – $1,000",
-              "$1,000+",
-              "Not sure",
-            ],
-          },
-        ],
+        title: "Answer short survey",
+        effort: "3 minutes",
+        reward: "Even earlier access",
+        url: "https://assemblycom.typeform.com/to/x5QfEJKM",
+        prefillEmail: true,
+        completedLabel: "Even earlier access unlocked",
+      },
+      {
+        id: "community",
+        title: "Join beta community",
+        effort: "Requires Slack",
+        reward: "Shape the roadmap",
+        url: "https://assembly.com/assembly-studio-community",
+        completedLabel: "Roadmap access unlocked",
       },
     ],
     dismissLabel: "Close",
