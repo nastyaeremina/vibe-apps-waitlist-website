@@ -58,7 +58,7 @@ export function Hero({
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-12 pt-32 md:pt-36 lg:pt-40">
         {/* Two-column grid for md+. On mobile, text stacks above the
             (hidden) visual and stays left-aligned. */}
-        <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-[1.05fr_1fr] md:gap-10 lg:gap-16">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[1.05fr_1fr] md:gap-10 lg:gap-16">
           {/* Left column — heading, subheading, CTA, foundation tags. */}
           <div className="flex flex-col items-start text-left">
             <h1 className="mb-6 max-w-[560px] text-[2.125rem] font-normal leading-[1.05] tracking-[-0.03em] text-white [text-wrap:balance] md:text-[3.25rem] md:tracking-[-0.035em]">

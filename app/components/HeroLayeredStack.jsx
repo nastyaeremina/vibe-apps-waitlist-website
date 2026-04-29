@@ -89,11 +89,11 @@ function Icon({ kind, className = "h-3.5 w-3.5" }) {
 
 function ScenePane({ eyebrow, title, children }) {
   return (
-    <div className="flex h-full w-full flex-col p-6">
+    <div className="flex h-full w-full flex-col p-5 md:p-6">
       <div className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.14em] text-white/35">
         {eyebrow}
       </div>
-      <div className="mb-5 text-[14px] tracking-[-0.005em] text-white/85">
+      <div className="mb-4 text-[13px] tracking-[-0.005em] text-white/85 md:mb-5 md:text-[14px]">
         {title}
       </div>
       <div className="flex-1">{children}</div>
@@ -261,7 +261,7 @@ export function HeroLayeredStack() {
   return (
     <div
       aria-hidden="true"
-      className="relative mx-auto hidden w-full max-w-[420px] md:block"
+      className="relative mx-auto w-full max-w-[320px] md:max-w-[420px]"
     >
       {/* Stage — square. Two ghost cards peek out from behind the
           front card (offset down + right) to suggest a stack of more
