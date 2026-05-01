@@ -1,5 +1,4 @@
 import { EmailCTA } from "./EmailCTA";
-import { HeroPromptToApp } from "./HeroPromptToApp";
 import { LogoStrip } from "./LogoStrip";
 
 export function Hero({
@@ -45,35 +44,29 @@ export function Hero({
         <EmailCTA />
       </div>
 
-      {/* Full-bleed portal showcase — pushed to the bottom of the
-          section via mt-auto so the readable column above stays
-          anchored to the top. The portal frame's height intentionally
-          exceeds the remaining space so it bleeds past the section's
-          bottom edge (clipped by overflow-hidden). */}
-      <div className="relative z-10 mt-auto w-full px-4 pt-12 md:px-6 md:pt-16 lg:px-10">
-        <HeroPromptToApp />
-      </div>
-
       {/* Alpha-user credential strip — pinned to the bottom of the
-          section, layered above the portal. A short gradient mask
-          behind it fades the portal under the strip so the logos
-          stay readable without obscuring the visual. */}
+          hero section. Eyebrow label sits directly above the marquee
+          so the credibility line ("Already used by early teams in
+          alpha") frames the logos rather than letting them float
+          unanchored. The hero visual that previously sat between
+          the CTA and the logos has been removed; the readable
+          column above stays anchored to the top via pt-* padding,
+          and this strip stays anchored to the bottom. */}
       {alphaLogos && alphaLogos.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
-          <div
-            aria-hidden="true"
-            className="h-20"
-            style={{
-              background:
-                "linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 60%, rgba(10,10,10,0) 100%)",
-            }}
-          />
-          <div className="bg-[#0a0a0a]/95 pb-2 pt-4 md:pb-3">
+          <div className="pb-2 pt-4 md:pb-3">
             <div className="mx-auto w-full max-w-[620px] px-6">
-              {/* Eyebrow ("Already used by early teams in alpha") is
-                  intentionally omitted for now — just the marquee.
-                  Tight bottom padding so the strip hugs the very
-                  bottom edge of the hero viewport. */}
+              {alphaLabel && (
+                <p
+                  className="mb-3 text-center text-[10px] uppercase tracking-[0.18em] text-white/45"
+                  style={{
+                    fontFamily:
+                      '"ABC Diatype Mono", ui-monospace, monospace',
+                  }}
+                >
+                  {alphaLabel}
+                </p>
+              )}
               <LogoStrip logos={alphaLogos} variant="dark" />
             </div>
           </div>
