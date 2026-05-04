@@ -1,5 +1,6 @@
 import { EmailCTA } from "./EmailCTA";
 import { LogoStrip } from "./LogoStrip";
+import { HeroPromptToApp } from "./HeroPromptToApp";
 
 export function Hero({
   eyebrow,
@@ -9,12 +10,15 @@ export function Hero({
   alphaLogos,
 }) {
   return (
-    // Two-column hero: text/CTA on the left, layered square-card
-    // visual on the right. Logo strip pinned to the bottom across
-    // the full width. min-height clamped so very tall viewports
-    // don't dump slack into one big gap.
+    // Notion-style stacked hero: headline + CTA at the top, the
+    // studio/client-portal visual anchored below it, and the logo
+    // strip on its own band at the bottom of the viewport. The
+    // visual is taller than the available middle slot so it bleeds
+    // below the logo band — the section's overflow-hidden clips
+    // anything past the viewport edge, giving the "screen continues
+    // off-canvas" feel.
     <section
-      className="relative overflow-hidden flex flex-col"
+      className="relative flex flex-col overflow-hidden"
       style={{
         height: "min(100vh, 1080px)",
       }}
@@ -30,11 +34,8 @@ export function Hero({
         }}
       />
 
-      {/* Centered text + CTA — the readable column. Logos no longer
-          live here; they're pinned to the bottom of the section over
-          the portal so they read as a credibility strip on the
-          showcase rather than a stack right under the CTA. */}
-      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-6 pt-32 text-center md:pt-36 lg:pt-40">
+      {/* Headline + CTA — pinned to the top of the section. */}
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl shrink-0 flex-col items-center px-6 pt-28 text-center md:pt-32 lg:pt-36">
         <h1 className="mb-6 max-w-[820px] text-[2.125rem] font-normal leading-[1.05] tracking-[-0.03em] text-white [text-wrap:balance] md:text-[3.25rem] md:tracking-[-0.035em]">
           {heading}
         </h1>
@@ -44,16 +45,25 @@ export function Hero({
         <EmailCTA />
       </div>
 
-      {/* Alpha-user credential strip — pinned to the bottom of the
-          hero section. Eyebrow label sits directly above the marquee
-          so the credibility line ("Already used by early teams in
-          alpha") frames the logos rather than letting them float
-          unanchored. The hero visual that previously sat between
-          the CTA and the logos has been removed; the readable
-          column above stays anchored to the top via pt-* padding,
-          and this strip stays anchored to the bottom. */}
+      {/* Visual slot — takes the remaining vertical space between the
+          CTA and the logo band. The HeroPromptToApp card has a fixed
+          640px height; when the slot is shorter than that (typical
+          laptop viewports) the card overflows downward and the
+          section's overflow-hidden clips it at the logo band, which
+          is exactly the Notion-style bleed we want. min-h-0 is needed
+          so flex-1 can actually shrink under its content height. */}
+      <div className="relative z-10 mt-10 flex min-h-0 flex-1 items-start justify-center px-6 md:mt-12">
+        <div className="w-full max-w-[1100px]">
+          <HeroPromptToApp />
+        </div>
+      </div>
+
+      {/* Alpha-user credential band — sits on top of the bleeding
+          visual, on its own dark strip so the logos read against a
+          flat backdrop instead of against the partially-visible
+          mock chrome behind them. */}
       {alphaLogos && alphaLogos.length > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
+        <div className="relative z-20 shrink-0 bg-[var(--color-bg)]">
           <div className="pb-2 pt-4 md:pb-3">
             <div className="mx-auto w-full max-w-[620px] px-6">
               {alphaLabel && (
