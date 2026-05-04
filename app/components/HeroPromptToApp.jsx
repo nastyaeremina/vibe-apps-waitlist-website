@@ -135,13 +135,6 @@ const T = {
   // Studio sidebar Time Tracker entry (left column) appears at the
   // same moment as the right-side portal entry.
   studioEntry: 4.4,
-  // Shimmer placeholders ("building…") in the client portal — the
-  // sidebar slot and the main view start glowing as soon as the AI
-  // begins responding, then fade out exactly as the real entry/UI
-  // fades in so the handoff feels continuous.
-  shimmerStart: 2.7,
-  shimmerSidebarDuration: 1.9,
-  shimmerMainDuration: 2.3,
 };
 
 // ── Studio sidebar row primitive ───────────────────────────────────
@@ -293,14 +286,8 @@ export function HeroPromptToApp() {
       aria-hidden="true"
       className="hsv-stage pointer-events-none relative w-full"
     >
-      {/* Single base tone for the whole hero card. Panel separation is
-          carried by borders (white/[0.06]) and one elevated inner frame,
-          not by stacking different shades of near-black against each
-          other. Mixing #080808 / #0a0a0a / #0c0c0c / #0e0e0e / #121212
-          made the seams visibly shift tone — Linear-style polish needs
-          one consistent base. */}
       <div
-        className="mx-auto h-[640px] w-full max-w-[1100px] overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.10] bg-[#0e0e0e]"
+        className="mx-auto h-[640px] w-full max-w-[1100px] overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.10] bg-[#0c0c0c]"
         style={{
           boxShadow:
             "0 1px 0 rgba(255,255,255,0.04) inset, 0 -16px 80px rgba(0,0,0,0.5)",
@@ -426,7 +413,7 @@ export function HeroPromptToApp() {
 
             {/* Bottom input — "How might you improve your app?" */}
             <div className="shrink-0 px-4 pb-4 pt-3">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5">
+              <div className="rounded-xl border border-white/[0.08] bg-[#121212] p-2.5">
                 <div className="flex items-center gap-2">
                   <span className="text-white/45">
                     <PaperclipIcon className="h-3.5 w-3.5" />
@@ -443,7 +430,7 @@ export function HeroPromptToApp() {
           </section>
 
           {/* ── Client portal preview — visible on lg+ only ── */}
-          <div className="relative hidden flex-1 flex-col lg:flex">
+          <div className="relative hidden flex-1 flex-col bg-[#080808] lg:flex">
             {/* Top: just the "Client portal preview" label. */}
             <div className="flex h-10 shrink-0 items-center border-b border-white/[0.06] px-4">
               <span className="text-[10.5px] text-white/45">
@@ -452,14 +439,10 @@ export function HeroPromptToApp() {
             </div>
 
             <div className="relative flex-1 p-5">
-              {/* Inner portal frame — the one elevated surface, slightly
-                  lighter than the outer card so the "client portal"
-                  reads as a separate window. Window chrome and sidebar
-                  share this same lift; separation is via border, not
-                  more color jumps. */}
-              <div className="relative h-full overflow-hidden rounded-xl border border-white/[0.08] bg-[#161616]">
+              {/* Inner portal frame — what the end client sees */}
+              <div className="relative h-full overflow-hidden rounded-xl border border-white/[0.08] bg-[#0e0e0e]">
                 {/* Window chrome */}
-                <div className="flex h-7 shrink-0 items-center gap-1 border-b border-white/[0.06] px-2.5">
+                <div className="flex h-7 shrink-0 items-center gap-1 border-b border-white/[0.06] bg-[#0a0a0a] px-2.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
                   <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
                   <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
@@ -470,7 +453,7 @@ export function HeroPromptToApp() {
 
                 <div className="flex h-[calc(100%-28px)]">
                   {/* Client's sidebar */}
-                  <aside className="w-[140px] shrink-0 border-r border-white/[0.06] p-2.5">
+                  <aside className="w-[140px] shrink-0 border-r border-white/[0.06] bg-[#0a0a0a] p-2.5">
                     <div className="mb-3 flex items-center gap-1.5 px-1">
                       <img
                         src="/logos/brandmages.svg"
@@ -494,57 +477,28 @@ export function HeroPromptToApp() {
                         iconSrc="/Icons/messages.svg"
                         label="Messages"
                       />
-                      {/* Building shimmer + Time Tracker entry share
-                          the same slot. The shimmer plays first as a
-                          glowing placeholder while the AI is still
-                          assembling, then fades out exactly as the
-                          real entry slides in. */}
-                      <div className="relative">
-                        <div
-                          aria-hidden="true"
-                          className="hsv-shimmer h-[26px] w-full"
-                          style={{
-                            ["--shimmer-delay"]: `${T.shimmerStart}s`,
-                            ["--shimmer-duration"]: `${T.shimmerSidebarDuration}s`,
-                          }}
-                        />
-                        <div
-                          className="hsv-portal-entry absolute inset-0"
-                          style={{ animationDelay: `${T.portalEntry}s` }}
-                        >
-                          <div className="flex items-center gap-2 rounded-md bg-white/[0.06] px-2 py-1.5 text-[11px] leading-none text-white/95">
-                            <ClockIcon className="h-3 w-3 shrink-0" />
-                            <span className="truncate">Time Tracker</span>
-                          </div>
+                      {/* Time Tracker entry — fades in once the build
+                          is complete. */}
+                      <div
+                        className="hsv-portal-entry"
+                        style={{ animationDelay: `${T.portalEntry}s` }}
+                      >
+                        <div className="flex items-center gap-2 rounded-md bg-white/[0.06] px-2 py-1.5 text-[11px] leading-none text-white/95">
+                          <ClockIcon className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Time Tracker</span>
                         </div>
                       </div>
                     </div>
                   </aside>
 
-                  {/* Client's main view — empty placeholder, building
-                      shimmer, then the actual Time Tracker UI. The
-                      shimmer is a single big glowing block that reads
-                      as "the app is being assembled here," then fades
-                      out as the real preview crossfades in. */}
+                  {/* Client's main view — empty placeholder, then
+                      crossfades to the actual Time Tracker UI. */}
                   <main className="relative flex-1 overflow-hidden">
                     <div
                       className="hsv-portal-empty absolute inset-0 flex flex-col"
                       style={{ animationDelay: "0s" }}
                     >
                       <ClientPortalEmpty />
-                    </div>
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-3 lg:inset-4"
-                    >
-                      <div
-                        className="hsv-shimmer h-full w-full"
-                        style={{
-                          ["--shimmer-delay"]: `${T.shimmerStart}s`,
-                          ["--shimmer-duration"]: `${T.shimmerMainDuration}s`,
-                          borderRadius: "10px",
-                        }}
-                      />
                     </div>
                     <div
                       className="hsv-portal-main absolute inset-0 flex flex-col"

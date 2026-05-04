@@ -945,67 +945,6 @@ html.lenis body {
   animation: hsv-portal-main-in 700ms ease-out both;
 }
 
-/* "Building" shimmer — telegraphs that the new app is being assembled
-   in the client portal before the real entry/UI lands. A soft brand-
-   green glow pulses while a diagonal highlight sweeps across, framed
-   by a faint dashed outline. The wrapper fades out just as the real
-   content fades in so the handoff is continuous, not a hard swap. */
-@keyframes hsv-shimmer-fade {
-  0% {
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes hsv-shimmer-sweep {
-  0% {
-    background-position: -150% 0;
-  }
-  100% {
-    background-position: 250% 0;
-  }
-}
-@keyframes hsv-shimmer-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px rgba(217, 237, 146, 0.18),
-      0 0 18px rgba(217, 237, 146, 0.1);
-  }
-  50% {
-    box-shadow: 0 0 0 1px rgba(217, 237, 146, 0.32),
-      0 0 28px rgba(217, 237, 146, 0.22);
-  }
-}
-.hsv-shimmer {
-  position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-  background-color: rgba(217, 237, 146, 0.05);
-  animation: hsv-shimmer-fade var(--shimmer-duration, 2.4s) ease-out both,
-    hsv-shimmer-pulse 1.6s ease-in-out infinite;
-  animation-delay: var(--shimmer-delay, 0s), var(--shimmer-delay, 0s);
-}
-.hsv-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 30%,
-    rgba(217, 237, 146, 0.28) 50%,
-    transparent 70%
-  );
-  background-size: 200% 100%;
-  animation: hsv-shimmer-sweep 1.6s linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hsv-prompt,
   .hsv-prompt-text,
@@ -1016,9 +955,7 @@ html.lenis body {
   .hsv-studio-entry,
   .hsv-portal-entry,
   .hsv-portal-empty,
-  .hsv-portal-main,
-  .hsv-shimmer,
-  .hsv-shimmer::after {
+  .hsv-portal-main {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
   }
