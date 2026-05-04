@@ -1,5 +1,6 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
+import { HeroV8 } from "./components/HeroV8";
 import { NarrativeBlock } from "./components/NarrativeBlock";
 import { ValueProps } from "./components/ValueProps";
 import { ComparisonSpec } from "./components/ComparisonSpec";
@@ -12,8 +13,11 @@ import { GradientReveal } from "./components/GradientReveal";
 import { Reveal } from "./components/Reveal";
 import { HOME_CONTENT } from "./content/home";
 
-export default function Home() {
+export default function Home({ searchParams }) {
   const c = HOME_CONTENT;
+  // ?hero=v8 swaps the dark V7 hero for the light V8 variant. Anything
+  // else falls through to the default (V7).
+  const variant = searchParams?.hero;
   return (
     <div className="min-h-screen">
       {/* Header is rendered OUTSIDE GradientReveal so its `position:
@@ -41,12 +45,21 @@ export default function Home() {
             the bottom — no ZoomHero scale/round-corners scroll effect.
             The transition between hero and the next section is a clean
             color flip (dark hero → cream NarrativeBlock), Notion-style. */}
-        <Hero
-          heading={c.hero.heading}
-          subheading={c.hero.subheading}
-          alphaLabel={c.logoStrip.label}
-          alphaLogos={c.logoStrip.logos}
-        />
+        {variant === "v8" ? (
+          <HeroV8
+            heading={c.hero.heading}
+            subheading={c.hero.subheading}
+            alphaLabel={c.logoStrip.label}
+            alphaLogos={c.logoStrip.logos}
+          />
+        ) : (
+          <Hero
+            heading={c.hero.heading}
+            subheading={c.hero.subheading}
+            alphaLabel={c.logoStrip.label}
+            alphaLogos={c.logoStrip.logos}
+          />
+        )}
 
       {/* NarrativeBlock manages its own staged reveal (heading first, then
           body) — no outer <Reveal> wrapper so the two effects don't
